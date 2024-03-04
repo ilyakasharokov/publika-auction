@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Yo</title>
+</head>
+<body>
+<div>
+<div>
+    <a href="/main">К списку</a>
+    <h2>Лот {{ .Id }}</h2>
+    <p>Количество ставок {{ .GetBidsCount }}</p>
+    <p>Количество просмотров {{ .ViewCount }}</p>
+    <p>Ставки:
+    <p>Текущая ставка {{.MaxConfirmed }}</p>
+    <table>
+        <thead>
+            <th>Сумма</th><th>Номер телефона</th><th>Имя </th><th>Почта (ПГ)</th><th>Логин TG</th><th>Подтверждено</th><th></th>
+        </thead>
+        {{ range .Bids}}
+        <tr>
+            <td>{{ .Summ }}</td><td><a href="/phone/{{ .Client.Phone }}">{{ .Client.Phone }}</a> </td><td>{{ .Client.Name }} </td><td>{{ .Client.Email }} </td><td>{{ .Client.TgUsername }} </td>
+            <td> {{ .Confirmed }} </td> <td> <a href="/chat/{{ .Client.TgUserId }}"> Все ставки чела </a> </td>
+        </tr>
+        {{ end }}
+    </table>
+
+</div>
+</div>
+</body>
+</html>

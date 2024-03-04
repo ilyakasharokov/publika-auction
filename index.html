@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Yo</title>
+</head>
+<body>
+<div>
+    <h1>Лоты</h1>
+
+    {{ range .Items}}
+    <div>
+        <h2>Лот {{ .Id }}</h2>
+        <p>Количество ставок {{ .GetBidsCount }}</p>
+        <p>Текущая ставка {{.MaxConfirmed }}</p>
+        <a href="/lot{{ .Id }}">Ставки</a>
+    </div>
+
+    {{ end }}
+
+    <h1>Отправить всем сообщение</h1>
+    <form action="">
+        <textarea name="message"></textarea>
+        <button type="submit">Отправить всем</button>
+    </form>
+
+</div>
+</body>
+</html>

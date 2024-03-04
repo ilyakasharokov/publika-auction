@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Yo</title>
+</head>
+<body>
+<div>
+    <h1>Чаты</h1>
+{{ range .}}
+    <div>
+        <h2>ID {{ .ID }}</h2>
+        <p>Логин {{ .TGUsername }}</p>
+        <p>Клмент {{ .Client }}</p>
+        <a href="/chat/{{ .Id }}/bets">Ставки</a>
+        <!-- <a href="/chat/{{ .Id }}/messages">Сообщения</a> -->
+    </div>
+
+{{ end }}
+</div>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Yo</title>
+</head>
+<body>
+<div>
+    <h1>Ставки чела</h1>
+    <h2>ID {{ .ID }}</h2>
+    <p>Логин {{ .TGUsername }}</p>
+    <p>Клиент {{ .Client }}</p>
+
+    <h1>Отправить челу сообщение</h1>
+    <form action="">
+        <textarea name="message"></textarea>
+        <button type="submit">Отправить всем</button>
+        {{ if .Sent }}
+        <div>Сообщение отправлено</div>
+        {{ end }}
+    </form>
+
+    <table>
+        <thead>
+        <th>Сумма</th><th>Номер телефона</th><th>Имя </th><th>Почта (ПГ)</th><th>Логин TG</th><th>Подтверждено</th><th></th>
+        </thead>
+        {{ range .Bids}}
+        <tr>
+            <td>{{ .Summ }}</td><td>{<a href="/phone/{{ .Client.Phone }}">{{ .Client.Phone }}</a></td><td>{{ .Client.Name }} </td><td>{{ .Client.Email }} </td><td>{{ .Client.TgUsername }} </td>
+            <td> {{ .Confirmed }} </td> <td> <a href="/chat/{{ .Client.TgUserId }}"> Все ставки чела </a> </td>
+        </tr>
+        {{ end }}
+    </table>
+</div>
+</body>
+</html>
