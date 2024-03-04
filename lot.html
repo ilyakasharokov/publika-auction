@@ -7,7 +7,12 @@
 <body>
 <div>
 <div>
-    <a href="/main">К списку</a>
+    <header>
+        <ul>
+            <li><a href="/main">Главная</a></li>
+            <li><a href="/chats">Чаты/челы </a></li>
+        </ul>
+    </header>
     <h2>Лот {{ .Id }}</h2>
     <p>Количество ставок {{ .GetBidsCount }}</p>
     <p>Количество просмотров {{ .ViewCount }}</p>

@@ -5,7 +5,12 @@
     <title>Yo</title>
 </head>
 <body>
-<div>
+    <header>
+        <ul>
+            <li><a href="/main">Главная</a></li>
+            <li><a href="/chats">Чаты/челы </a></li>
+        </ul>
+    </header>
     <h1>Лоты</h1>
 
     {{ range .Items}}
@@ -18,11 +23,16 @@
 
     {{ end }}
 
-    <h1>Отправить всем сообщение</h1>
-    <form action="">
-        <textarea name="message"></textarea>
-        <button type="submit">Отправить всем</button>
-    </form>
+    <div>
+        <h1>Отправить всем сообщение</h1>
+        <form action="" method="post">
+            <textarea name="message"></textarea>
+            <button type="submit">Отправить всем</button>
+            {{ if .Sent }}
+            <div>Сообщение отправлено</div>
+            {{ end }}
+        </form>
+    </div>
 
 </div>
 </body>

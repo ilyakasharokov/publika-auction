@@ -51,6 +51,12 @@ begin:
 	sharePhoneBtn := tgbotapi.NewKeyboardButtonContact("ПОДЕЛИТЬСЯ НОМЕРОМ / SHARE YOUR PHONE NUMBER")
 	foundByPhone := false
 
+	cl, ok := c.clRepo.GetClientByTGID(c.ID)
+	if ok {
+		c.client = &cl
+		goto authSuccess
+	}
+
 	for {
 		select {
 		case inUpd, ok := <-c.in:
@@ -125,6 +131,8 @@ needPhoto:
 	}*/
 
 authSuccess:
+
+	c.clRepo.SetClient(cl.Phone, *c.client)
 
 	if !foundByPhone {
 		c.out <- tgbotapi.NewMessage(c.ID, "Привет, "+c.client.Name)

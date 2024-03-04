@@ -38,11 +38,17 @@ type MainObj struct {
 	Sent  bool
 }
 
-func Main(_ *configuration.Config, bs *bids.BidsStorage) func(w http.ResponseWriter, r *http.Request) {
+func Main(_ *configuration.Config, bs *bids.BidsStorage, hb *hub.Hub) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var indexTemplate, _ = template.ParseFiles("index.html")
 		mo := MainObj{}
 		mo.Items = bs.GetItems()
+		r.ParseForm()
+		msg := r.Form.Get("message")
+		if msg != "" {
+			hb.SendToAll(msg)
+			mo.Sent = true
+		}
 		err := indexTemplate.Execute(w, mo)
 		if err != nil {
 			log.Err(err).Msg("Execute error")
@@ -85,6 +91,10 @@ func Chats(_ *configuration.Config, hb *hub.Hub) func(w http.ResponseWriter, r *
 	}
 }
 
+type Form struct {
+	Message string
+}
+
 func ChatBids(_ *configuration.Config, hb *hub.Hub, mngSrv *mng.MngSrv) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var indexTemplate, _ = template.ParseFiles("chatbids.html")
@@ -95,10 +105,17 @@ func ChatBids(_ *configuration.Config, hb *hub.Hub, mngSrv *mng.MngSrv) func(w h
 			log.Err(err).Msg("ChatBids can't parse num")
 			return
 		}
+
 		chat := hb.GetChatById(chatId)
 		if chat.Client != nil {
 			bids := mngSrv.GetBidsByPhone(chat.Client.Phone)
 			chat.Bids = bids
+			r.ParseForm()
+			msg := r.Form.Get("message")
+			if msg != "" {
+				hb.SendTo(chatId, chat.TGUsername, msg)
+				chat.Sent = true
+			}
 		}
 		err = indexTemplate.Execute(w, chat)
 		if err != nil {

@@ -26,10 +26,12 @@ func New(cfg *configuration.Config, bs *bids.BidsStorage, hb *hub.Hub, ms *mng.M
 	r := chi.NewRouter()
 	// r.Get("/", handlers.WS(cfg, hb))
 	// r.Get("/events", handlers.GetEvents(repo))
-	r.Get("/main", handlers.Main(cfg, bs))
+	r.Get("/main", handlers.Main(cfg, bs, hb))
+	r.Post("/main", handlers.Main(cfg, bs, hb))
 	r.Get("/lot{num:([0-9]+)}", handlers.Lot(cfg, bs))
 	r.Get("/chats", handlers.Chats(cfg, hb))
 	r.Get("/chat/{id:([0-9]+)}", handlers.ChatBids(cfg, hb, ms))
+	r.Post("/chat/{id:([0-9]+)}", handlers.ChatBids(cfg, hb, ms))
 	r.Get("/phone/{phone:(\\+[0-9]+)}", handlers.PhoneBids(cfg, hb, ms))
 
 	r.NotFound(handlers.NotFound)

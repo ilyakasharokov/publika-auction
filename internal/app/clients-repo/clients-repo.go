@@ -11,6 +11,19 @@ type ClientsRepository struct {
 }
 
 type DBService interface {
+	GetClients() []Client
+	SetClient(client Client)
+}
+
+func (c *ClientsRepository) GetClientByTGID(id int64) (Client, bool) {
+	c.mx.RLock()
+	defer c.mx.RUnlock()
+	for _, c := range c.storage {
+		if c.TgUserId == id {
+			return c, true
+		}
+	}
+	return Client{}, false
 }
 
 func (c *ClientsRepository) GetClient(phone string) (Client, bool) {
@@ -32,6 +45,7 @@ func (c *ClientsRepository) SetClient(phone string, cl Client) {
 		return
 	}
 	c.storage[phone] = cl
+	c.mng.SetClient(cl)
 }
 
 func (c *ClientsRepository) GetPhones() []string {
@@ -44,6 +58,10 @@ func (c *ClientsRepository) GetPhones() []string {
 
 func (c *ClientsRepository) SetAll(m map[string]Client) {
 	c.storage = m
+	cls := c.mng.GetClients()
+	for _, cl := range cls {
+		c.storage[cl.Phone] = cl
+	}
 }
 
 func New(srv DBService) *ClientsRepository {
@@ -51,6 +69,10 @@ func New(srv DBService) *ClientsRepository {
 		mx:      sync.RWMutex{},
 		storage: make(map[string]Client, 0),
 		mng:     srv,
+	}
+	cls := srv.GetClients()
+	for _, c := range cls {
+		repo.storage[c.Phone] = c
 	}
 	return &repo
 }

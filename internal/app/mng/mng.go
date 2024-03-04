@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson"
+	clients_repo "publika-auction/internal/app/clients-repo"
 	"publika-auction/internal/app/models"
 	"time"
 
@@ -81,4 +82,32 @@ func (ms *MngSrv) GetBidsByPhone(phone string) []models.Bid {
 		bids = append(bids, result)
 	}
 	return bids
+}
+
+func (ms *MngSrv) GetClients() []clients_repo.Client {
+	filter := bson.D{}
+	items, err := ms.db.Collection("clients").Find(context.Background(), filter)
+	if err != nil {
+		log.Err(err).Msg("GetClients error")
+		return nil
+	}
+	cls := make([]clients_repo.Client, 0)
+	for items.Next(context.Background()) {
+		var result clients_repo.Client
+		err := items.Decode(&result)
+		if err != nil {
+			log.Err(err).Msg("GetClients next error")
+			return cls
+		}
+		cls = append(cls, result)
+	}
+	return cls
+}
+
+func (ms *MngSrv) SetClient(cl clients_repo.Client) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	deleteFilter := bson.D{{"phone", cl.Phone}}
+	ms.db.Collection("clients").DeleteOne(ctx, deleteFilter)
+	ms.db.Collection("clients").InsertOne(ctx, cl)
 }

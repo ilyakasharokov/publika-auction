@@ -6,15 +6,21 @@
 </head>
 <body>
 <div>
+    <header>
+        <ul>
+            <li><a href="/main">Главная</a></li>
+            <li><a href="/chats">Чаты/челы </a></li>
+        </ul>
+    </header>
     <h1>Ставки чела</h1>
     <h2>ID {{ .ID }}</h2>
     <p>Логин {{ .TGUsername }}</p>
     <p>Клиент {{ .Client }}</p>
 
     <h1>Отправить челу сообщение</h1>
-    <form action="">
+    <form action="" method="post">
         <textarea name="message"></textarea>
-        <button type="submit">Отправить всем</button>
+        <button type="submit">Отправить челу</button>
         {{ if .Sent }}
         <div>Сообщение отправлено</div>
         {{ end }}

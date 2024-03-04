@@ -6,13 +6,19 @@
 </head>
 <body>
 <div>
+    <header>
+        <ul>
+            <li><a href="/main">Главная</a></li>
+            <li><a href="/chats">Чаты/челы </a></li>
+        </ul>
+    </header>
     <h1>Чаты</h1>
 {{ range .}}
     <div>
         <h2>ID {{ .ID }}</h2>
         <p>Логин {{ .TGUsername }}</p>
-        <p>Клмент {{ .Client }}</p>
-        <a href="/chat/{{ .Id }}/bets">Ставки</a>
+        <p>Клиент {{ .Client }}</p>
+        <a href="/chat/{{ .ID }}">Чел</a>
         <!-- <a href="/chat/{{ .Id }}/messages">Сообщения</a> -->
     </div>
 
