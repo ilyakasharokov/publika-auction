@@ -255,6 +255,8 @@ func (c *Chat) AddBet(sum int) {
 	}
 	if err == nil {
 		msg := tgbotapi.NewMessage(c.ID, "Ставка принята ( Лот #"+strconv.Itoa(c.currentLot)+" "+strconv.Itoa(sum)+"р)")
+		c.out <- msg
+		msg = tgbotapi.NewMessage(c.ID, "...")
 		rows := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Назад", "back"))
 		markup := tgbotapi.NewInlineKeyboardMarkup(rows)
 		msg.ReplyMarkup = markup
