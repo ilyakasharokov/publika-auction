@@ -77,10 +77,13 @@ func (bt *TGBot) Start(ctx context.Context) {
 			m, _ := bt.bot.Send(toSend)
 			log.Info().Interface("toSend", toSend).Interface("message", m).Msg("tg send message")
 		case toSend := <-bt.bdsOut:
-			//
 			msg := tgbotapi.NewMessage(toSend.ChatId, toSend.Message)
 			m, _ := bt.bot.Send(msg)
-			log.Info().Interface("toSend", toSend).Interface("message", m).Msg("tg send message")
+			log.Info().Interface("toSend", toSend).Interface("message", m).Msg("tg send message bdsout")
+		case toSend := <-bt.hb.Out:
+			//
+			m, _ := bt.bot.Send(toSend)
+			log.Info().Interface("toSend", toSend).Interface("message", m).Msg("tg send message hbout")
 		case <-ctx.Done():
 			log.Info().Msg("bot stopped (context is done")
 			return

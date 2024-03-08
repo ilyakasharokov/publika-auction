@@ -30,18 +30,28 @@
             <li><a href="/registered">Зареганые челы</a></li>
         </ul>
     </header>
-    <h1>Ставки чела</h1>
+    <h1>Зареганые челы</h1>
     <table>
         <thead>
-        <th>Сумма</th><th>Номер телефона</th><th>Имя </th><th>Почта (ПГ)</th><th>Логин TG</th><th>Подтверждено</th><th></th>
+            <th>Имя</th>
+            <th>Фамилия</th>
+            <th>Логин TG</th>
+            <th>Номер</th>
+            <th>Ссылка на чат (может не работать)</th>
         </thead>
+        <tbody>
         {{ range .}}
-        <tr>
-            <td>{{ .Summ }}</td><td><a href="/phone/{{ .Client.Phone }}">{{ .Client.Phone }}</a> </td><td>{{ .Client.Name }} </td><td>{{ .Client.Email }} </td><td>{{ .Client.TgUsername }} </td>
-            <td> {{ .Confirmed }} </td> <td> <a href="/chat/{{ .Client.TgUserId }}"> Все ставки чела </a> </td>
-        </tr>
+            <tr>
+                <td>{{ .TgFirstName }}</td>
+                <td>{{ .TgLastName }}</td>
+                <td>{{ .TgUsername }}</td>
+                <td>{{ .Phone }}</td>
+                <td><a href="/chat/{{ .TgUserId }}">Чел</a></td>
+            </tr>
         {{ end }}
+        </tbody>
     </table>
+
 </div>
 </body>
 </html>

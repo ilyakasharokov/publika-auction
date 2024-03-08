@@ -45,6 +45,7 @@ func New() Config {
 	}
 	var c Config
 	err := env.Parse(&c)
+
 	if err != nil {
 		panic(err)
 	}

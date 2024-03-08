@@ -10,16 +10,19 @@
         <ul>
             <li><a href="/main">Главная</a></li>
             <li><a href="/chats">Чаты/челы </a></li>
+            <li><a href="/registered">Зареганые челы</a></li>
         </ul>
     </header>
     <h1>Чаты</h1>
 {{ range .}}
     <div>
         <h2>ID {{ .ID }}</h2>
-        <p>Логин {{ .TGUsername }}</p>
-        <p>Клиент {{ .Client }}</p>
+        <p>Имя: {{ .Client.TgFirstName }}</p>
+        <p>Фамилия: {{ .Client.TgLastName }}</p>
+        <p>Логин tg: {{ .TGUsername }}</p>
+        <p>Номер: {{ .Client.Phone }}</p>
         <a href="/chat/{{ .ID }}">Чел</a>
-        <!-- <a href="/chat/{{ .Id }}/messages">Сообщения</a> -->
+
     </div>
 
 {{ end }}

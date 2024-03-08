@@ -3,6 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <title>Yo</title>
+    <style>
+        table {
+            width: 100%;
+            border-spacing: 0;
+        }
+
+        table td {
+            padding: 10px;
+            border-bottom: 1px solid;
+            border-spacing: 0;
+        }
+
+        th {
+            text-align: left;
+            border-bottom: 2px solid;
+        }
+    </style>
 </head>
 <body>
 <div>
@@ -10,12 +27,34 @@
         <ul>
             <li><a href="/main">Главная</a></li>
             <li><a href="/chats">Чаты/челы </a></li>
+            <li><a href="/registered">Зареганые челы</a></li>
         </ul>
     </header>
     <h1>Ставки чела</h1>
-    <h2>ID {{ .ID }}</h2>
-    <p>Логин {{ .TGUsername }}</p>
-    <p>Клиент {{ .Client }}</p>
+    <h2>ID {{ .ID }} {{if .Client.IsBlocked }} (Заблокирован) {{ end }}</h2>
+    <p>Логин телеграм {{ .TGUsername }}</p>
+    <p>Телефон {{ .Client.Phone }}</p>
+
+    <table>
+        <thead>
+            <th>Сумма</th><th>Номер телефона</th><th>Имя </th><th>Почта (ПГ)</th><th>Логин TG</th><th>Подтверждено</th><th></th><th></th><th></th>
+        </thead>
+        {{ range .Bids}}
+        <tr>
+            <td>{{ .Summ }}</td><td><a href="/phone/{{ .Client.Phone }}">{{ .Client.Phone }}</a></td><td>{{ .Client.Name }} </td><td>{{ .Client.Email }} </td><td>{{ .Client.TgUsername }} </td>
+            <td> {{ .Confirmed }} </td> <td> <a href="/chat/{{ .Client.TgUserId }}"> Все ставки чела </a> </td>
+        </tr>
+        {{ end }}
+    </table>
+
+    <h1>Чат с челом</h1>
+    <div class="messages">
+        <ul>
+        {{ range .Client.Messages}}
+            <li>{{ .Author }}: {{ .Text }}  ( {{ .Date.Format "Jan 02, 2006 15:04:05 UTC" }} )</li>
+        {{ end }}
+        </ul>
+    </div>
 
     <h1>Отправить челу сообщение</h1>
     <form action="" method="post">
@@ -26,17 +65,6 @@
         {{ end }}
     </form>
 
-    <table>
-        <thead>
-        <th>Сумма</th><th>Номер телефона</th><th>Имя </th><th>Почта (ПГ)</th><th>Логин TG</th><th>Подтверждено</th><th></th>
-        </thead>
-        {{ range .Bids}}
-        <tr>
-            <td>{{ .Summ }}</td><td>{<a href="/phone/{{ .Client.Phone }}">{{ .Client.Phone }}</a></td><td>{{ .Client.Name }} </td><td>{{ .Client.Email }} </td><td>{{ .Client.TgUsername }} </td>
-            <td> {{ .Confirmed }} </td> <td> <a href="/chat/{{ .Client.TgUserId }}"> Все ставки чела </a> </td>
-        </tr>
-        {{ end }}
-    </table>
 </div>
 </body>
 </html>

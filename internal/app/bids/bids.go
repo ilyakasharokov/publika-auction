@@ -6,6 +6,7 @@ import (
 	clients_repo "publika-auction/internal/app/clients-repo"
 	"publika-auction/internal/app/mng"
 	"publika-auction/internal/app/models"
+	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -16,6 +17,7 @@ type BidsStorage struct {
 	Items map[int]models.Item
 	out   chan Msg
 	mng   *mng.MngSrv
+	Start bool
 }
 
 type Msg struct {
@@ -38,10 +40,13 @@ func (bs *BidsStorage) GetItem(lot int) (models.Item, error) {
 }
 
 func (bs *BidsStorage) AddBet(lot int, summ int, clientsPhone string, client *clients_repo.Client) (int, error) {
-	bs.mx.RLock()
-	defer bs.mx.RUnlock()
+	bs.mx.Lock()
+	defer bs.mx.Unlock()
 	item, ok := bs.Items[lot]
 	if ok {
+		if item.SoldFor > 0 {
+			return 123123, errors.New("sold")
+		}
 		if summ >= item.MaxConfirmed+step {
 			newBid := models.Bid{
 				Id:           item.Id*10000000 + len(item.Bids),
@@ -66,6 +71,26 @@ func (bs *BidsStorage) AddBet(lot int, summ int, clientsPhone string, client *cl
 		}
 	}
 	return 0, errors.New("not found")
+}
+
+func (bs *BidsStorage) SellItem(lot int, bidId int) {
+	bs.mx.Lock()
+	defer bs.mx.Unlock()
+	item, ok := bs.Items[lot]
+	if ok {
+		for _, b := range item.Bids {
+			if b.Id == bidId {
+				if b.Client != nil {
+					item.SoldFor = b.Summ
+					bs.Items[lot] = item
+					go bs.SendToOut(b.Client.TgUserId, "Поздравляем, лот #"+strconv.Itoa(item.Id)+" продан вам за  "+strconv.Itoa(b.Summ)+"р")
+					log.Info().Str("phone", b.ClientsPhone).Str("tg", b.Client.TgUsername).Int("lot", lot).Int("summ", b.Summ).Msg("superalarm sold")
+					return
+				}
+			}
+		}
+
+	}
 }
 
 func (bs *BidsStorage) SendToOut(id int64, msg string) {
@@ -99,11 +124,29 @@ func (bs *BidsStorage) ConfirmBet(lot int, id int) error {
 func (bs *BidsStorage) GetItems() Items {
 	bs.mx.RLock()
 	defer bs.mx.RUnlock()
-	ar := make([]models.Item, len(bs.Items)+1)
-	for i, item := range bs.Items {
-		ar[i] = item
+	ar := make([]models.Item, 0)
+	for _, item := range bs.Items {
+		if item.SoldFor == 0 {
+			ar = append(ar, item)
+		}
 	}
-	return ar[1:]
+	sort.SliceStable(ar, func(i, j int) bool {
+		return ar[i].Id < ar[j].Id
+	})
+	return ar
+}
+
+func (bs *BidsStorage) GetAllItems() Items {
+	bs.mx.RLock()
+	defer bs.mx.RUnlock()
+	ar := make([]models.Item, 0)
+	for _, item := range bs.Items {
+		ar = append(ar, item)
+	}
+	sort.SliceStable(ar, func(i, j int) bool {
+		return ar[i].Id < ar[j].Id
+	})
+	return ar
 }
 
 type Items []models.Item
@@ -133,6 +176,7 @@ func New(mg *mng.MngSrv) (*BidsStorage, chan Msg) {
 	bs := &BidsStorage{
 		Items: make(map[int]models.Item),
 		mng:   mg,
+		Start: false,
 	}
 	for i := 1; i < 19; i++ {
 		bs.Items[i] = models.Item{
@@ -140,7 +184,7 @@ func New(mg *mng.MngSrv) (*BidsStorage, chan Msg) {
 			Bids:         make([]models.Bid, 0),
 			MaxConfirmed: 1000,
 			Photo:        "https://static.insales-cdn.com/images/products/1/2639/787352143/large_PG_4_copy.png",
-			Description:  "Здесь какое то описание лота, возможно длинное или нет кто его знает, может вообще не будет. десь какое то описание лота, возможно длинное или нет кто его знает, может вообще не будет",
+			Description:  "можно длинное или нет кто его знает, может вообще не будет",
 		}
 	}
 	out := make(chan Msg, 0)
@@ -152,22 +196,13 @@ func New(mg *mng.MngSrv) (*BidsStorage, chan Msg) {
 			item, ok := bs.Items[bid.ItemId]
 			if ok {
 				item.Bids = append(item.Bids, bid)
-				item.MaxConfirmed = bid.Summ
+				if bid.Summ > item.MaxConfirmed {
+					item.MaxConfirmed = bid.Summ
+					item.MaxBid = bid
+				}
 			}
 			bs.Items[bid.ItemId] = item
 		}
 	}
-	/*	bs.Items[2] = Item{
-			Id:           2,
-			Bids:         make([]Bid, 0),
-			MaxConfirmed: 1000,
-			Photo:        "https://static.insales-cdn.com/images/products/1/2639/787352143/large_PG_4_copy.png",
-		}
-		bs.Items[3] = Item{
-			Id:           3,
-			Bids:         make([]Bid, 0),
-			MaxConfirmed: 1000,
-			Photo:        "https://static.insales-cdn.com/images/products/1/2639/787352143/large_PG_4_copy.png",
-		}*/
 	return bs, out
 }

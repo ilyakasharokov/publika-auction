@@ -10,9 +10,11 @@ import (
 	"net/http"
 	"publika-auction/cmd/configuration"
 	"publika-auction/internal/app/bids"
+	clients_repo "publika-auction/internal/app/clients-repo"
 	"publika-auction/internal/app/hub"
 	"publika-auction/internal/app/mng"
 	"strconv"
+	"time"
 )
 
 func Responder(w http.ResponseWriter, _ *http.Request, response interface{}, code int) {
@@ -36,19 +38,27 @@ type Response struct {
 type MainObj struct {
 	Items bids.Items
 	Sent  bool
+	Start bool
+	Now   time.Time
 }
 
 func Main(_ *configuration.Config, bs *bids.BidsStorage, hb *hub.Hub) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var indexTemplate, _ = template.ParseFiles("index.html")
 		mo := MainObj{}
-		mo.Items = bs.GetItems()
+		mo.Now = time.Now()
+		mo.Items = bs.GetAllItems()
 		r.ParseForm()
 		msg := r.Form.Get("message")
 		if msg != "" {
 			hb.SendToAll(msg)
 			mo.Sent = true
 		}
+		start := r.Form.Get("start")
+		if start == "start" {
+			bs.Start = true
+		}
+		mo.Start = bs.Start
 		err := indexTemplate.Execute(w, mo)
 		if err != nil {
 			log.Err(err).Msg("Execute error")
@@ -57,7 +67,7 @@ func Main(_ *configuration.Config, bs *bids.BidsStorage, hb *hub.Hub) func(w htt
 	}
 }
 
-func Lot(_ *configuration.Config, bs *bids.BidsStorage) func(w http.ResponseWriter, r *http.Request) {
+func Lot(_ *configuration.Config, bs *bids.BidsStorage, clRepo *clients_repo.ClientsRepository) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var indexTemplate, _ = template.ParseFiles("lot.html")
 		numStr := chi.URLParam(r, "num")
@@ -65,6 +75,20 @@ func Lot(_ *configuration.Config, bs *bids.BidsStorage) func(w http.ResponseWrit
 		if err != nil {
 			log.Err(err).Msg("lot can't parse num")
 			return
+		}
+		r.ParseForm()
+		phone := r.Form.Get("phone")
+		if phone != "" {
+			clRepo.Block(phone)
+		}
+		bidid := r.Form.Get("bidid")
+		if bidid != "" {
+			bidNum, err := strconv.Atoi(bidid)
+			if err != nil {
+				log.Err(err).Str("uri", r.RequestURI).Msg("bidNum strconv")
+			} else {
+				bs.SellItem(num, bidNum)
+			}
 		}
 		lot, err := bs.GetItem(num)
 		if err != nil {
@@ -86,6 +110,18 @@ func Chats(_ *configuration.Config, hb *hub.Hub) func(w http.ResponseWriter, r *
 		err := indexTemplate.Execute(w, chats)
 		if err != nil {
 			log.Err(err).Msg("Chats Execute error")
+			return
+		}
+	}
+}
+
+func Registered(_ *configuration.Config, clRepo *clients_repo.ClientsRepository) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var indexTemplate, _ = template.ParseFiles("registered.html")
+		chats := clRepo.GetAllWithId()
+		err := indexTemplate.Execute(w, chats)
+		if err != nil {
+			log.Err(err).Msg("Registered Execute error")
 			return
 		}
 	}

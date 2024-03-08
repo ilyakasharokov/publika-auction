@@ -7,6 +7,7 @@ import (
 	"publika-auction/internal/app/bids"
 	clients_repo "publika-auction/internal/app/clients-repo"
 	"publika-auction/internal/app/models"
+	"time"
 )
 
 type Hub struct {
@@ -15,6 +16,7 @@ type Hub struct {
 	redis  *redis.Client
 	clRepo *clients_repo.ClientsRepository
 	bds    *bids.BidsStorage
+	Out    chan tgbotapi.Chattable
 }
 
 func New(rd *redis.Client, repo *clients_repo.ClientsRepository, bds *bids.BidsStorage) *Hub {
@@ -23,6 +25,7 @@ func New(rd *redis.Client, repo *clients_repo.ClientsRepository, bds *bids.BidsS
 		redis:  rd,
 		clRepo: repo,
 		bds:    bds,
+		Out:    make(chan tgbotapi.Chattable),
 	}
 }
 
@@ -93,14 +96,22 @@ func (h *Hub) SendTo(id int64, tgname string, message string) {
 	if ok {
 		msg := tgbotapi.NewMessage(id, message)
 		cl.out <- msg
+		if cl.client != nil {
+			cl.client.Messages = append(cl.client.Messages, clients_repo.Message{
+				Author: "Мы",
+				Text:   message,
+				Date:   time.Now(),
+			})
+			h.clRepo.SetClient(cl.client.Phone, *cl.client)
+		}
 		log.Info().Str("tgname", tgname).Str("message", message).Msg("hub sendto")
 	}
 }
 
 func (h *Hub) SendToAll(message string) {
-	for _, c := range h.Chats {
-		msg := tgbotapi.NewMessage(c.ID, message)
-		c.out <- msg
+	for _, cl := range h.clRepo.GetAllWithId() {
+		msg := tgbotapi.NewMessage(cl.TgUserId, message)
+		h.Out <- msg
 	}
 	log.Info().Str("message", message).Msg("hub sendtoall")
 }

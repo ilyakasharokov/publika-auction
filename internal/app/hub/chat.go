@@ -54,6 +54,10 @@ begin:
 	cl, ok := c.clRepo.GetClientByTGID(c.ID)
 	if ok {
 		c.client = &cl
+		select {
+		case <-c.in:
+		default:
+		}
 		goto authSuccess
 	}
 
@@ -89,7 +93,11 @@ begin:
 					c.client.TgLastName = inMsg.Contact.LastName
 					c.client.TgUsername = inMsg.Chat.UserName
 					c.client.TgUserId = inMsg.Chat.ID
+					if c.client.Messages == nil {
+						c.client.Messages = make([]clients_repo.Message, 0)
+					}
 					foundByPhone = true
+					log.Info().Interface("client", cl).Bool("f", foundByPhone).Msg("found by phone")
 					goto authSuccess
 				} else {
 					cl := &clients_repo.Client{
@@ -99,9 +107,9 @@ begin:
 						TgLastName:  inMsg.Contact.LastName,
 						TgUsername:  inMsg.Chat.UserName,
 						TgUserId:    inMsg.Chat.ID,
+						Messages:    make([]clients_repo.Message, 0),
 					}
 					c.client = cl
-					goto needPhoto
 				}
 			} else {
 				msg := tgbotapi.NewMessage(c.ID, "⬇️ Нажми на кнопку \"Поделиться номером\" ⬇️")
@@ -117,34 +125,42 @@ begin:
 		}
 	}
 
-needPhoto:
-	msg = tgbotapi.NewMessage(c.ID, "Еще нам понадобится ваше селфи. Ну это потом сделаем или не будем делать")
-	/*for {
-		select {
-		case _, ok := <-c.in:
-			if !ok {
-				log.Err(errors.New("channel is closed")).Int64("id", c.ID).Msg("channel is closed")
-				return
-			}
-
-		}
-	}*/
-
 authSuccess:
 
 	c.clRepo.SetClient(cl.Phone, *c.client)
 
-	if !foundByPhone {
-		c.out <- tgbotapi.NewMessage(c.ID, "Привет, "+c.client.Name)
-	}
-
-	msg = tgbotapi.NewMessage(c.ID, "Привет, "+c.client.Name)
+	msg = tgbotapi.NewMessage(c.ID, "Привет, "+c.client.TgFirstName)
 	msg.ReplyMarkup = &tgbotapi.ReplyKeyboardRemove{
 		RemoveKeyboard: true,
 	}
 	c.out <- msg
 
-	c.lastAuth = time.Now()
+	if !c.bds.Start {
+		msg = tgbotapi.NewMessage(c.ID, "Аукцион скоро начнется...")
+		c.out <- msg
+	waiting:
+		for {
+			select {
+			case inUpd, ok := <-c.in:
+				if !ok {
+					log.Err(errors.New("channel is closed")).Int64("id", c.ID).Msg("channel is closed")
+					return
+				}
+				if inUpd.Message != nil {
+					c.client.Messages = append(c.client.Messages, clients_repo.Message{c.TGUserName, inUpd.Message.Text, time.Now()})
+					c.clRepo.SetClient(cl.Phone, *c.client)
+					msg = tgbotapi.NewMessage(c.ID, "Аукцион скоро начнется...")
+					c.out <- msg
+				}
+			default:
+				if c.bds.Start == false {
+					time.Sleep(3 * time.Second)
+				} else {
+					break waiting
+				}
+			}
+		}
+	}
 
 	c.sendPhotos()
 
@@ -157,6 +173,10 @@ authSuccess:
 				log.Err(errors.New("channel is closed")).Int64("id", c.ID).Msg("channel is closed")
 				return
 			}
+			cl, ok := c.clRepo.GetClientByTGID(c.ID)
+			if ok {
+				c.client = &cl
+			}
 			var inMsg *tgbotapi.Message
 			if inUpd.Message != nil {
 				// message
@@ -166,11 +186,20 @@ authSuccess:
 				}
 				sum, _ := strconv.Atoi(inMsg.Text)
 				if c.currentLot != 0 && sum != 0 {
+					if cl.IsBlocked {
+						msg := tgbotapi.NewMessage(c.ID, "Вы в черном списке. Ваши ставки не принимаются")
+						c.out <- msg
+						continue
+					}
 					c.AddBet(sum)
 					continue
 				}
 				if inMsg.Text == "/help" {
 					c.sendLotsKeyboard()
+				}
+				if inMsg.Text != "" {
+					c.client.Messages = append(c.client.Messages, clients_repo.Message{c.TGUserName, inMsg.Text, time.Now()})
+					c.clRepo.SetClient(cl.Phone, *c.client)
 				}
 				log.Info().Str("tgusername", c.TGUserName).Str("msg", inMsg.Text).Msg("freemessage")
 			} else if inUpd.CallbackQuery != nil {
@@ -186,8 +215,13 @@ authSuccess:
 					c.currentLot = lot
 					c.sendLotKeyboard()
 				case sum > 1000:
+					if cl.IsBlocked {
+						msg := tgbotapi.NewMessage(c.ID, "Вы в черном списке. Ваши ставки не принимаются")
+						c.out <- msg
+						continue
+					}
 					c.AddBet(sum)
-					c.sendLotsKeyboard()
+					// c.sendLotsKeyboard()
 				case cmnd == "back":
 					c.currentLot = 0
 					c.sendLotsKeyboard()
@@ -210,12 +244,20 @@ func HandlePhone(phone string) string {
 
 func (c *Chat) AddBet(sum int) {
 	newSum, err := c.bds.AddBet(c.currentLot, sum, c.client.Phone, c.client)
-	if err != nil && newSum > 0 {
-		msg := tgbotapi.NewMessage(c.ID, "Ставка уже выросла до "+strconv.Itoa(newSum)+"р ( минимальный шаг 1000р )")
+	if err != nil && newSum == 123123 {
+		msg := tgbotapi.NewMessage(c.ID, "Лот уже продан")
 		c.out <- msg
+	} else {
+		if err != nil && newSum > 0 {
+			msg := tgbotapi.NewMessage(c.ID, "Ставка уже выросла до "+strconv.Itoa(newSum)+"р ( минимальный шаг 1000р )")
+			c.out <- msg
+		}
 	}
 	if err == nil {
 		msg := tgbotapi.NewMessage(c.ID, "Ставка принята ( Лот #"+strconv.Itoa(c.currentLot)+" "+strconv.Itoa(sum)+"р)")
+		rows := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Назад", "back"))
+		markup := tgbotapi.NewInlineKeyboardMarkup(rows)
+		msg.ReplyMarkup = markup
 		c.out <- msg
 	}
 }
@@ -254,7 +296,7 @@ func (c *Chat) sendLotsKeyboard() {
 		}
 		rows = append(rows, tgbotapi.NewInlineKeyboardRow(row...))
 	}
-	rows = append(rows, tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Обновить", "back")))
+	// rows = append(rows, tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Обновить", "back")))
 	markup := tgbotapi.NewInlineKeyboardMarkup(rows...)
 	msg.ReplyMarkup = markup
 	c.out <- msg
@@ -293,12 +335,12 @@ func (c *Chat) sendLotKeyboard() {
 		user, err = c.dbApp.Auth(context.Background(), c.TGUserName)
 		if err != nil {
 			log.Err(err).Str("tg user name", c.TGUserName).Msg("db login error")
-			c.out <- tgbotapi.NewMessage(c.ID, "Ошибка авторизации")
+			c.Out <- tgbotapi.NewMessage(c.ID, "Ошибка авторизации")
 			return user, err
 		}
 		if user.Error != 0 {
 			log.Err(errors.New("error != 0")).Str("tg user name", c.TGUserName).Msg("db login error")
-			c.out <- tgbotapi.NewMessage(c.ID, "Ошибка авторизации")
+			c.Out <- tgbotapi.NewMessage(c.ID, "Ошибка авторизации")
 			return user, err
 		}
 		c.client = &user

@@ -2,6 +2,7 @@ package clients_repo
 
 import (
 	"sync"
+	"time"
 )
 
 type ClientsRepository struct {
@@ -37,15 +38,23 @@ func (c *ClientsRepository) GetClient(phone string) (Client, bool) {
 }
 
 func (c *ClientsRepository) SetClient(phone string, cl Client) {
-	c.mx.RLock()
-	defer c.mx.RUnlock()
-	_, found := c.storage[phone]
-	if found {
-		c.storage[phone] = cl
-		return
-	}
+	c.mx.Lock()
+	defer c.mx.Unlock()
 	c.storage[phone] = cl
 	c.mng.SetClient(cl)
+}
+
+func (c *ClientsRepository) Block(phone string) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+	_, found := c.storage[phone]
+	if found {
+		cl := c.storage[phone]
+		cl.IsBlocked = true
+		c.storage[phone] = cl
+		c.mng.SetClient(cl)
+		return
+	}
 }
 
 func (c *ClientsRepository) GetPhones() []string {
@@ -64,6 +73,16 @@ func (c *ClientsRepository) SetAll(m map[string]Client) {
 	}
 }
 
+func (c *ClientsRepository) GetAllWithId() []Client {
+	ar := make([]Client, 0)
+	for _, cl := range c.storage {
+		if cl.TgUserId != 0 {
+			ar = append(ar, cl)
+		}
+	}
+	return ar
+}
+
 func New(srv DBService) *ClientsRepository {
 	repo := ClientsRepository{
 		mx:      sync.RWMutex{},
@@ -77,6 +96,12 @@ func New(srv DBService) *ClientsRepository {
 	return &repo
 }
 
+type Message struct {
+	Author string
+	Text   string
+	Date   time.Time
+}
+
 type Client struct {
 	Name  string
 	Names []string
@@ -87,5 +112,8 @@ type Client struct {
 	TgUserId    int64
 	TgFirstName string
 	TgLastName  string
-	HasBets     bool
+
+	HasBets   bool
+	IsBlocked bool
+	Messages  []Message
 }
