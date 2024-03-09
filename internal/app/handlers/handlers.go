@@ -90,6 +90,15 @@ func Lot(_ *configuration.Config, bs *bids.BidsStorage, clRepo *clients_repo.Cli
 				bs.SellItem(num, bidNum)
 			}
 		}
+		deletebidid := r.Form.Get("deletebidid")
+		if deletebidid != "" {
+			bidNum, err := strconv.Atoi(deletebidid)
+			if err != nil {
+				log.Err(err).Str("uri", r.RequestURI).Msg("bidNum strconv")
+			} else {
+				bs.CancelBet(num, bidNum)
+			}
+		}
 		lot, err := bs.GetItem(num)
 		if err != nil {
 			log.Err(err).Int("lot", num).Msg("lot not found")

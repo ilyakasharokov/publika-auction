@@ -44,6 +44,12 @@
         <tr>
             <td>{{ .Summ }}</td><td><a href="/phone/{{ .Client.Phone }}">{{ .Client.Phone }}</a> </td><td>{{ .Client.Name }} </td><td>{{ .Client.Email }} </td><td>{{ .Client.TgUsername }} </td>
             <td> {{ .Confirmed }} </td> <td> <a href="/chat/{{ .Client.TgUserId }}"> Все ставки чела </a> </td>
+
+            <td><form action="" method="post">
+                <input type="hidden" name="deletebidid" value="{{ .Id }}">
+                <button type="submit">Удалить ставку</button>
+            </form></td>
+
             <td> {{if (eq $.SoldFor 0) }} <form action="" method="post">
                 <input type="hidden" name="bidid" value="{{ .Id }}">
                 <button type="submit">Продать этому челу за {{ .Summ }}</button> {{ else }} (ПРОДАНО ЗА {{ $.SoldFor }} ) {{ end }}

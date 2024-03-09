@@ -121,6 +121,37 @@ func (bs *BidsStorage) ConfirmBet(lot int, id int) error {
 	return nil
 }
 
+func (bs *BidsStorage) CancelBet(lot int, id int) error {
+	bs.mx.Lock()
+	defer bs.mx.Unlock()
+	item, ok := bs.Items[lot]
+	if ok {
+		bid := models.Bid{}
+		bidIndex := 0
+		for i, b := range item.Bids {
+			if b.Id == id {
+				bidIndex = i
+				bid = b
+				break
+			}
+		}
+		if bid.Id == 0 {
+			return errors.New("bid not found")
+		}
+		prev := item.Bids[:bidIndex]
+		after := item.Bids[bidIndex+1:]
+		item.Bids = append(prev, after...)
+		if bid.Id == item.MaxBid.Id {
+			prevBid := item.Bids[bidIndex-1]
+			item.MaxConfirmed = prevBid.Summ
+			item.MaxBid = prevBid
+		}
+		bs.Items[lot] = item
+		go bs.mng.DeleteBid(bid)
+	}
+	return nil
+}
+
 func (bs *BidsStorage) GetItems() Items {
 	bs.mx.RLock()
 	defer bs.mx.RUnlock()

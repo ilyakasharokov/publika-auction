@@ -42,6 +42,17 @@ func (ms *MngSrv) InsertBid(bid models.Bid) {
 	log.Info().Interface("res", res).Msg("insert bid success")
 }
 
+func (ms *MngSrv) DeleteBid(bid models.Bid) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	res, err := ms.db.Collection("bids").DeleteOne(ctx, bid)
+	if err != nil {
+		log.Err(err).Interface("bid", bid).Msg("delete bid error")
+		return
+	}
+	log.Info().Interface("res", res).Msg("delete bid success")
+}
+
 func (ms *MngSrv) GetBids() []models.Bid {
 	filter := bson.D{}
 	items, err := ms.db.Collection("bids").Find(context.Background(), filter)
