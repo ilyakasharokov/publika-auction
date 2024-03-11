@@ -37,7 +37,7 @@
     <div class="lot-block">
         <h2>Лот {{ .Id }}</h2> {{if (gt .SoldFor 0) }} (ПРОДАНО ЗА {{ .SoldFor }} ) {{ end }}
         <p>Количество ставок {{ .GetBidsCount }}</p>
-        {{ if gt .MaxConfirmed 15000 }}
+        {{ if gt .MaxConfirmed 30000 }}
         <p>Последняя ставка {{ .MaxConfirmed }} {{ .MaxBid.Date.Format "15:04:05" }} {{ .MaxBid.Client.TgUsername }}</p>
         {{ end }}
         <a href="/lot{{ .Id }}">Ставки</a>
