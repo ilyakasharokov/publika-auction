@@ -215,7 +215,7 @@ authSuccess:
 					lot, _ := strconv.Atoi(lotStr)
 					c.currentLot = lot
 					c.sendLotKeyboard()
-				case sum > 1000:
+				case sum > 2000:
 					if cl.IsBlocked {
 						msg := tgbotapi.NewMessage(c.ID, "Вы в черном списке. Ваши ставки не принимаются")
 						c.out <- msg
@@ -320,10 +320,10 @@ func (c *Chat) sendLotKeyboard() tgbotapi.MessageConfig {
 	nmsg := tgbotapi.NewMediaGroup(c.ID, imgs)
 	c.out <- nmsg
 
-	newSum := strconv.Itoa(item.MaxConfirmed + 1000)
+	newSum := strconv.Itoa(item.MaxConfirmed + 2000)
 	newSum5 := strconv.Itoa(item.MaxConfirmed + 5000)
 	newSum10 := strconv.Itoa(item.MaxConfirmed + 10000)
-	msg := tgbotapi.NewMessage(c.ID, "Лот #"+strconv.Itoa(c.currentLot)+". \nТекущая ставка "+strconv.Itoa(item.MaxConfirmed)+"р. \nДля того чтобы предложить свою ставку отправьте сумму ( минимальный шаг 1000р ).\n")
+	msg := tgbotapi.NewMessage(c.ID, "Лот #"+strconv.Itoa(c.currentLot)+". \nТекущая ставка "+strconv.Itoa(item.MaxConfirmed)+"р. \nДля того чтобы предложить свою ставку отправьте сумму ( минимальный шаг 2000р ).\n")
 	msg.ParseMode = "html"
 	rows := [][]tgbotapi.InlineKeyboardButton{{
 		tgbotapi.NewInlineKeyboardButtonData("Поднять до "+newSum, newSum),
@@ -346,10 +346,10 @@ func (c *Chat) getLotKeyboard() tgbotapi.MessageConfig {
 		return tgbotapi.MessageConfig{}
 	}
 
-	newSum := strconv.Itoa(item.MaxConfirmed + 1000)
+	newSum := strconv.Itoa(item.MaxConfirmed + 2000)
 	newSum5 := strconv.Itoa(item.MaxConfirmed + 5000)
 	newSum10 := strconv.Itoa(item.MaxConfirmed + 10000)
-	msg := tgbotapi.NewMessage(c.ID, "Лот #"+strconv.Itoa(c.currentLot)+". \nТекущая ставка "+strconv.Itoa(item.MaxConfirmed)+"р. \nДля того чтобы предложить свою ставку отправьте сумму ( минимальный шаг 1000р ).\n")
+	msg := tgbotapi.NewMessage(c.ID, "Лот #"+strconv.Itoa(c.currentLot)+". \nТекущая ставка "+strconv.Itoa(item.MaxConfirmed)+"р. \nДля того чтобы предложить свою ставку отправьте сумму ( минимальный шаг 2000р ).\n")
 	msg.ParseMode = "html"
 	rows := [][]tgbotapi.InlineKeyboardButton{{
 		tgbotapi.NewInlineKeyboardButtonData("Поднять до "+newSum, newSum),

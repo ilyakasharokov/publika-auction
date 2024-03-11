@@ -26,7 +26,7 @@ type Msg struct {
 	NewLot  int
 }
 
-var step = 1000
+var step = 2000
 
 func (bs *BidsStorage) GetItem(lot int) (models.Item, error) {
 	bs.mx.RLock()
@@ -214,7 +214,7 @@ func New(mg *mng.MngSrv) (*BidsStorage, chan Msg) {
 		bs.Items[i] = models.Item{
 			Id:           i,
 			Bids:         make([]models.Bid, 0),
-			MaxConfirmed: 15000,
+			MaxConfirmed: 30000,
 			Photo:        "https://dimanova.space/images/num/jpeg-optimizer_" + strconv.Itoa(i) + ".jpg",
 			Description:  "можно длинное или нет кто его знает, может вообще не будет",
 		}
