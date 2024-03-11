@@ -214,7 +214,7 @@ func New(mg *mng.MngSrv) (*BidsStorage, chan Msg) {
 			Id:           i,
 			Bids:         make([]models.Bid, 0),
 			MaxConfirmed: 1000,
-			Photo:        "https://static.insales-cdn.com/images/products/1/2639/787352143/large_PG_4_copy.png",
+			Photo:        "https://dimanova.space/images/num/jpeg-optimizer_" + strconv.Itoa(i) + ".jpg",
 			Description:  "можно длинное или нет кто его знает, может вообще не будет",
 		}
 	}

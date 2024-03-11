@@ -310,7 +310,7 @@ func (c *Chat) sendLotKeyboard() {
 		log.Err(err).Int("currentLot", c.currentLot).Msg("sendLotKeyboard getitem error")
 		return
 	}
-	imgs := []interface{}{tgbotapi.NewInputMediaPhoto(tgbotapi.FileURL(item.Photo)), tgbotapi.NewInputMediaPhoto(tgbotapi.FileURL(item.Photo))}
+	imgs := []interface{}{tgbotapi.NewInputMediaPhoto(tgbotapi.FileURL(item.Photo))}
 	nmsg := tgbotapi.NewMediaGroup(c.ID, imgs)
 	c.out <- nmsg
 
