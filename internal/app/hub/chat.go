@@ -110,6 +110,7 @@ begin:
 						Messages:    make([]clients_repo.Message, 0),
 					}
 					c.client = cl
+					goto authSuccess
 				}
 			} else {
 				msg := tgbotapi.NewMessage(c.ID, "⬇️ Нажми на кнопку \"Поделиться номером\" ⬇️")

@@ -29,18 +29,18 @@ func (c *ClientsRepository) GetClientByTGID(id int64) (Client, bool) {
 
 func (c *ClientsRepository) GetClient(phone string) (Client, bool) {
 	c.mx.RLock()
+	defer c.mx.RUnlock()
 	_, found := c.storage[phone]
 	if !found {
 		return Client{}, false
 	}
-	defer c.mx.RUnlock()
 	return c.storage[phone], true
 }
 
 func (c *ClientsRepository) SetClient(phone string, cl Client) {
 	c.mx.Lock()
-	defer c.mx.Unlock()
 	c.storage[phone] = cl
+	c.mx.Unlock()
 	c.mng.SetClient(cl)
 }
 

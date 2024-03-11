@@ -10,7 +10,6 @@ import (
 	"publika-auction/cmd/configuration"
 	bids2 "publika-auction/internal/app/bids"
 	clients_repo "publika-auction/internal/app/clients-repo"
-	csv_service "publika-auction/internal/app/csv-service"
 	"publika-auction/internal/app/hub"
 	"publika-auction/internal/app/mng"
 	"publika-auction/internal/app/server"
@@ -28,11 +27,11 @@ func main() {
 		panic(err)
 	}
 
-	cls := csv_service.New()
-	clients, err := cls.Read()
+	// cls := csv_service.New()
+	// clients, err := cls.Read()
 
 	clRepo := clients_repo.New(mg)
-	clRepo.SetAll(clients)
+	// clRepo.SetAll(clients)
 
 	rds := redis.NewClient(&redis.Options{
 		Addr:     cfg.REDIS_ADDR,
