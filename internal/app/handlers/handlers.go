@@ -183,6 +183,31 @@ func PhoneBids(_ *configuration.Config, _ *hub.Hub, mngSrv *mng.MngSrv) func(w h
 	}
 }
 
+func Auth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		_, err := r.Cookie("auth")
+		if err != nil {
+			var authTemplate, _ = template.ParseFiles("auth.html")
+			r.ParseForm()
+			if r.Form.Get("login") == "dimadima" && r.Form.Get("pwd") == "Dimanovaforever!" {
+				http.SetCookie(rw, &http.Cookie{
+					Name:    "auth",
+					Value:   "auth",
+					Expires: time.Now().Add(1 * time.Hour),
+				})
+				next.ServeHTTP(rw, r)
+			}
+			err = authTemplate.Execute(rw, 0)
+			if err != nil {
+				log.Err(err).Msg("Execute error")
+				return
+			}
+			return
+		}
+		next.ServeHTTP(rw, r)
+	})
+}
+
 func NotFound(w http.ResponseWriter, r *http.Request) {
 	log.Err(errors.New("method not found")).Str("url", r.RequestURI).Msg("")
 	w.WriteHeader(http.StatusNotFound)

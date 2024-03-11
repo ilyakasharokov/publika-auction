@@ -27,6 +27,7 @@ func New(cfg *configuration.Config, bs *bids.BidsStorage, hb *hub.Hub, ms *mng.M
 	r := chi.NewRouter()
 	// r.Get("/", handlers.WS(cfg, hb))
 	// r.Get("/events", handlers.GetEvents(repo))
+	r.Use(handlers.Auth)
 	r.Get("/main", handlers.Main(cfg, bs, hb))
 	r.Post("/main", handlers.Main(cfg, bs, hb))
 	r.Get("/lot{num:([0-9]+)}", handlers.Lot(cfg, bs, clRepo))
