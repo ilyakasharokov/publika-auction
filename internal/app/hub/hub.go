@@ -73,7 +73,7 @@ func (h *Hub) GetChats() []ChatInfo {
 	return ci
 }
 
-func (h *Hub) GetChatById(id int64) ChatInfo {
+func (h *Hub) GetChatInfoById(id int64) ChatInfo {
 	for _, c := range h.Chats {
 		if c.ID == id {
 			tgun := "unregistered"
@@ -91,6 +91,14 @@ func (h *Hub) GetChatById(id int64) ChatInfo {
 	return ChatInfo{}
 }
 
+func (h *Hub) GetChatById(id int64) Chat {
+	for _, c := range h.Chats {
+		if c.ID == id {
+			return *c
+		}
+	}
+	return Chat{}
+}
 func (h *Hub) SendTo(id int64, tgname string, message string) {
 	cl, ok := h.Chats[id]
 	if ok {

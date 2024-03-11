@@ -23,6 +23,7 @@ type BidsStorage struct {
 type Msg struct {
 	ChatId  int64
 	Message string
+	NewLot  int
 }
 
 var step = 1000
@@ -58,7 +59,7 @@ func (bs *BidsStorage) AddBet(lot int, summ int, clientsPhone string, client *cl
 				Client:       client,
 			}
 			if item.MaxBid.Client != nil && item.MaxBid.Client.TgUserId != client.TgUserId {
-				go bs.SendToOut(item.MaxBid.Client.TgUserId, "Вашу ставку перебили на лот #"+strconv.Itoa(item.Id)+" перебили. \nНовая ставка "+strconv.Itoa(newBid.Summ)+"р")
+				go bs.SendToOut(item.MaxBid.Client.TgUserId, "Вашу ставку на лот #"+strconv.Itoa(item.Id)+" перебили. \nНовая ставка "+strconv.Itoa(newBid.Summ)+"р", item.Id)
 			}
 			item.MaxBid = newBid
 			item.Bids = append(item.Bids, newBid)
@@ -83,7 +84,7 @@ func (bs *BidsStorage) SellItem(lot int, bidId int) {
 				if b.Client != nil {
 					item.SoldFor = b.Summ
 					bs.Items[lot] = item
-					go bs.SendToOut(b.Client.TgUserId, "Поздравляем, лот #"+strconv.Itoa(item.Id)+" продан вам за  "+strconv.Itoa(b.Summ)+"р")
+					go bs.SendToOut(b.Client.TgUserId, "Поздравляем, лот #"+strconv.Itoa(item.Id)+" продан вам за "+strconv.Itoa(b.Summ)+"р", 0)
 					log.Info().Str("phone", b.ClientsPhone).Str("tg", b.Client.TgUsername).Int("lot", lot).Int("summ", b.Summ).Msg("superalarm sold")
 					return
 				}
@@ -93,8 +94,8 @@ func (bs *BidsStorage) SellItem(lot int, bidId int) {
 	}
 }
 
-func (bs *BidsStorage) SendToOut(id int64, msg string) {
-	bs.out <- Msg{id, msg}
+func (bs *BidsStorage) SendToOut(id int64, msg string, itemId int) {
+	bs.out <- Msg{id, msg, itemId}
 	log.Info().Msg("t")
 }
 

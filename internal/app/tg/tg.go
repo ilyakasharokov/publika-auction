@@ -77,6 +77,16 @@ func (bt *TGBot) Start(ctx context.Context) {
 			m, _ := bt.bot.Send(toSend)
 			log.Info().Interface("toSend", toSend).Interface("message", m).Msg("tg send message")
 		case toSend := <-bt.bdsOut:
+			if toSend.NewLot != 0 {
+				chat := bt.hb.GetChatById(toSend.ChatId)
+				if chat.ID != 0 {
+					msg := chat.SendLotKeyboard(toSend.NewLot)
+					msg.Text = toSend.Message
+					m, _ := bt.bot.Send(msg)
+					log.Info().Interface("toSend", toSend).Interface("message", m).Msg("tg send message bdsout")
+					continue
+				}
+			}
 			msg := tgbotapi.NewMessage(toSend.ChatId, toSend.Message)
 			m, _ := bt.bot.Send(msg)
 			log.Info().Interface("toSend", toSend).Interface("message", m).Msg("tg send message bdsout")

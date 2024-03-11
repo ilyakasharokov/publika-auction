@@ -243,6 +243,11 @@ func HandlePhone(phone string) string {
 	return p
 }
 
+func (c *Chat) SendLotKeyboard(lot int) tgbotapi.MessageConfig {
+	c.currentLot = lot
+	return c.getLotKeyboard()
+}
+
 func (c *Chat) AddBet(sum int) {
 	newSum, err := c.bds.AddBet(c.currentLot, sum, c.client.Phone, c.client)
 	if err != nil && newSum == 123123 {
@@ -305,11 +310,11 @@ func (c *Chat) sendLotsKeyboard() {
 	c.out <- msg
 }
 
-func (c *Chat) sendLotKeyboard() {
+func (c *Chat) sendLotKeyboard() tgbotapi.MessageConfig {
 	item, err := c.bds.GetItem(c.currentLot)
 	if err != nil {
 		log.Err(err).Int("currentLot", c.currentLot).Msg("sendLotKeyboard getitem error")
-		return
+		return tgbotapi.MessageConfig{}
 	}
 	imgs := []interface{}{tgbotapi.NewInputMediaPhoto(tgbotapi.FileURL(item.Photo))}
 	nmsg := tgbotapi.NewMediaGroup(c.ID, imgs)
@@ -331,6 +336,32 @@ func (c *Chat) sendLotKeyboard() {
 	markup := tgbotapi.NewInlineKeyboardMarkup(rows...)
 	msg.ReplyMarkup = markup
 	c.out <- msg
+	return msg
+}
+
+func (c *Chat) getLotKeyboard() tgbotapi.MessageConfig {
+	item, err := c.bds.GetItem(c.currentLot)
+	if err != nil {
+		log.Err(err).Int("currentLot", c.currentLot).Msg("sendLotKeyboard getitem error")
+		return tgbotapi.MessageConfig{}
+	}
+
+	newSum := strconv.Itoa(item.MaxConfirmed + 1000)
+	newSum5 := strconv.Itoa(item.MaxConfirmed + 5000)
+	newSum10 := strconv.Itoa(item.MaxConfirmed + 10000)
+	msg := tgbotapi.NewMessage(c.ID, "Лот #"+strconv.Itoa(c.currentLot)+". \nТекущая ставка "+strconv.Itoa(item.MaxConfirmed)+"р. \nДля того чтобы предложить свою ставку отправьте сумму ( минимальный шаг 1000р ).\n")
+	msg.ParseMode = "html"
+	rows := [][]tgbotapi.InlineKeyboardButton{{
+		tgbotapi.NewInlineKeyboardButtonData("Поднять до "+newSum, newSum),
+		tgbotapi.NewInlineKeyboardButtonData("Поднять до "+newSum5, newSum5),
+	}, {
+		tgbotapi.NewInlineKeyboardButtonData("Поднять до "+newSum10, newSum10),
+		tgbotapi.NewInlineKeyboardButtonData("Назад к списку", "back"),
+	},
+	}
+	markup := tgbotapi.NewInlineKeyboardMarkup(rows...)
+	msg.ReplyMarkup = markup
+	return msg
 }
 
 /*

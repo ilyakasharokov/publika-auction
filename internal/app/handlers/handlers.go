@@ -151,7 +151,7 @@ func ChatBids(_ *configuration.Config, hb *hub.Hub, mngSrv *mng.MngSrv) func(w h
 			return
 		}
 
-		chat := hb.GetChatById(chatId)
+		chat := hb.GetChatInfoById(chatId)
 		if chat.Client != nil {
 			bids := mngSrv.GetBidsByPhone(chat.Client.Phone)
 			chat.Bids = bids
