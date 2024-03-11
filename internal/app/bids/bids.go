@@ -214,7 +214,7 @@ func New(mg *mng.MngSrv) (*BidsStorage, chan Msg) {
 		bs.Items[i] = models.Item{
 			Id:           i,
 			Bids:         make([]models.Bid, 0),
-			MaxConfirmed: 1000,
+			MaxConfirmed: 15000,
 			Photo:        "https://dimanova.space/images/num/jpeg-optimizer_" + strconv.Itoa(i) + ".jpg",
 			Description:  "можно длинное или нет кто его знает, может вообще не будет",
 		}
