@@ -163,9 +163,9 @@ authSuccess:
 		}
 	}
 
-	c.sendPhotos()
+	// c.sendPhotos()
 
-	c.sendLotsKeyboard()
+	// c.sendLotsKeyboard()
 
 	for {
 		select {
@@ -192,11 +192,11 @@ authSuccess:
 						c.out <- msg
 						continue
 					}
-					c.AddBet(sum)
+					// c.AddBet(sum)
 					continue
 				}
 				if inMsg.Text == "/help" {
-					c.sendLotsKeyboard()
+					// c.sendLotsKeyboard()
 				}
 				if inMsg.Text != "" {
 					c.client.Messages = append(c.client.Messages, clients_repo.Message{c.TGUserName, inMsg.Text, time.Now()})
@@ -204,6 +204,7 @@ authSuccess:
 				}
 				log.Info().Str("tgusername", c.TGUserName).Str("msg", inMsg.Text).Msg("freemessage")
 			} else if inUpd.CallbackQuery != nil {
+				continue
 				d := tgbotapi.NewDeleteMessage(inUpd.CallbackQuery.Message.Chat.ID, inUpd.CallbackQuery.Message.MessageID)
 				c.out <- d
 
