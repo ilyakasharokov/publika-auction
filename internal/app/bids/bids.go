@@ -208,16 +208,30 @@ func New(mg *mng.MngSrv) (*BidsStorage, chan Msg) {
 	bs := &BidsStorage{
 		Items: make(map[int]models.Item),
 		mng:   mg,
-		Start: false,
+		Start: true,
 	}
 	for i := 1; i < 19; i++ {
-		bs.Items[i] = models.Item{
+		item := models.Item{
 			Id:           i,
 			Bids:         make([]models.Bid, 0),
 			MaxConfirmed: 30000,
 			Photo:        "https://dimanova.space/images/num/jpeg-optimizer_" + strconv.Itoa(i) + ".jpg",
-			Description:  "можно длинное или нет кто его знает, может вообще не будет",
 		}
+		switch i {
+		case 2:
+			item.SoldFor = 47000
+		case 6:
+			item.SoldFor = 34000
+		case 7:
+			item.SoldFor = 51000
+		case 9:
+			item.SoldFor = 42000
+		case 11:
+			item.SoldFor = 132000
+		case 13:
+			item.SoldFor = 176000
+		}
+		bs.Items[i] = item
 	}
 	out := make(chan Msg, 0)
 	bs.out = out

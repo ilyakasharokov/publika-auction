@@ -291,19 +291,15 @@ func (c *Chat) sendLotsKeyboard() {
 	lots := c.bds.GetItems()
 	msg := tgbotapi.NewMessage(c.ID, "Выбери лот")
 	rows := make([][]tgbotapi.InlineKeyboardButton, 0)
-	for i := 0; i < 6; i++ {
-		row := make([]tgbotapi.InlineKeyboardButton, 0)
-		for j := 0; j < 3; j++ {
-			id := i*3 + j + 1
-			lot := lots.ById(id)
-			if lot == nil {
-				continue
-			}
-			// row = append(row, tgbotapi.NewInlineKeyboardButtonData("Лот #"+strconv.Itoa(i*3+j+1)+" ("+strconv.Itoa(lot.MaxConfirmed)+"р)", "lot"+strconv.Itoa(i*3+j+1)))
-			row = append(row, tgbotapi.NewInlineKeyboardButtonData("Лот #"+strconv.Itoa(i*3+j+1), "lot"+strconv.Itoa(i*3+j+1)))
+	row := make([]tgbotapi.InlineKeyboardButton, 0)
+	for _, lot := range lots {
+		if len(row) == 3 {
+			rows = append(rows, tgbotapi.NewInlineKeyboardRow(row...))
+			row = make([]tgbotapi.InlineKeyboardButton, 0)
 		}
-		rows = append(rows, tgbotapi.NewInlineKeyboardRow(row...))
+		row = append(row, tgbotapi.NewInlineKeyboardButtonData("Лот #"+strconv.Itoa(lot.Id), "lot"+strconv.Itoa(lot.Id)))
 	}
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(row...))
 	// rows = append(rows, tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Обновить", "back")))
 	markup := tgbotapi.NewInlineKeyboardMarkup(rows...)
 	msg.ReplyMarkup = markup
