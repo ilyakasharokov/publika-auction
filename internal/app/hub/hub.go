@@ -113,6 +113,8 @@ func (h *Hub) SendTo(id int64, tgname string, message string) {
 			h.clRepo.SetClient(cl.client.Phone, *cl.client)
 		}
 		log.Info().Str("tgname", tgname).Str("message", message).Msg("hub sendto")
+	} else {
+		h.Out <- tgbotapi.NewMessage(id, message)
 	}
 }
 

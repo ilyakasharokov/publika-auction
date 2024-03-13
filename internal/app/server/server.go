@@ -36,8 +36,8 @@ func New(cfg *configuration.Config, bs *bids.BidsStorage, hb *hub.Hub, ms *mng.M
 	r.Post("/chats", handlers.Chats(cfg, hb))
 	r.Get("/registered", handlers.Registered(cfg, clRepo))
 	r.Post("/registered", handlers.Registered(cfg, clRepo))
-	r.Get("/chat/{id:([0-9]+)}", handlers.ChatBids(cfg, hb, ms))
-	r.Post("/chat/{id:([0-9]+)}", handlers.ChatBids(cfg, hb, ms))
+	r.Get("/chat/{id:([0-9]+)}", handlers.ChatBids(cfg, hb, ms, clRepo))
+	r.Post("/chat/{id:([0-9]+)}", handlers.ChatBids(cfg, hb, ms, clRepo))
 	r.Get("/phone/{phone:(\\+[0-9]+)}", handlers.PhoneBids(cfg, hb, ms))
 	r.Post("/phone/{phone:(\\+[0-9]+)}", handlers.PhoneBids(cfg, hb, ms))
 

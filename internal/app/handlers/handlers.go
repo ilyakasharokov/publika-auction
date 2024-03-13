@@ -140,7 +140,7 @@ type Form struct {
 	Message string
 }
 
-func ChatBids(_ *configuration.Config, hb *hub.Hub, mngSrv *mng.MngSrv) func(w http.ResponseWriter, r *http.Request) {
+func ChatBids(_ *configuration.Config, hb *hub.Hub, mngSrv *mng.MngSrv, repository *clients_repo.ClientsRepository) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var indexTemplate, _ = template.ParseFiles("chatbids.html")
 		numStr := chi.URLParam(r, "id")
@@ -161,6 +161,24 @@ func ChatBids(_ *configuration.Config, hb *hub.Hub, mngSrv *mng.MngSrv) func(w h
 				hb.SendTo(chatId, chat.TGUsername, msg)
 				chat.Sent = true
 			}
+		} else {
+			client, ok := repository.GetClientByTGID(chatId)
+			if ok {
+				chat = hub.ChatInfo{
+					ID:         client.TgUserId,
+					TGUsername: client.TgUsername,
+					Client:     &client,
+					Bids:       mngSrv.GetBidsByPhone(client.Phone),
+					Sent:       false,
+				}
+				r.ParseForm()
+				msg := r.Form.Get("message")
+				if msg != "" {
+					hb.SendTo(chatId, chat.TGUsername, msg)
+					chat.Sent = true
+				}
+			}
+
 		}
 		err = indexTemplate.Execute(w, chat)
 		if err != nil {
