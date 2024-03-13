@@ -174,6 +174,12 @@ func ChatBids(_ *configuration.Config, hb *hub.Hub, mngSrv *mng.MngSrv, reposito
 				r.ParseForm()
 				msg := r.Form.Get("message")
 				if msg != "" {
+					chat.Client.Messages = append(chat.Client.Messages, clients_repo.Message{
+						Author: "Мы",
+						Text:   msg,
+						Date:   time.Now(),
+					})
+					repository.SetClient(chat.Client.Phone, *chat.Client)
 					hb.SendTo(chatId, chat.TGUsername, msg)
 					chat.Sent = true
 				}
