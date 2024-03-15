@@ -38,6 +38,7 @@
             <th>Логин TG</th>
             <th>Номер</th>
             <th>Ссылка на чат (может не работать)</th>
+            <th>Сообщения</th>
         </thead>
         <tbody>
         {{ range .}}
@@ -47,6 +48,7 @@
                 <td>{{ .TgUsername }}</td>
                 <td>{{ .Phone }}</td>
                 <td><a href="/chat/{{ .TgUserId }}">Чел</a></td>
+                <td> {{ .Messages }}</td>
             </tr>
         {{ end }}
         </tbody>

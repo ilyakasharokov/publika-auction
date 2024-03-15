@@ -13,6 +13,7 @@ import (
 	clients_repo "publika-auction/internal/app/clients-repo"
 	"publika-auction/internal/app/hub"
 	"publika-auction/internal/app/mng"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -128,6 +129,21 @@ func Registered(_ *configuration.Config, clRepo *clients_repo.ClientsRepository)
 	return func(w http.ResponseWriter, r *http.Request) {
 		var indexTemplate, _ = template.ParseFiles("registered.html")
 		chats := clRepo.GetAllWithId()
+		sort.SliceStable(chats, func(i, j int) bool {
+			data1 := time.Now()
+			data2 := time.Now()
+			for _, m := range chats[i].Messages {
+				if m.Date.After(data1) {
+					data1 = m.Date
+				}
+			}
+			for _, m := range chats[j].Messages {
+				if m.Date.After(data2) {
+					data2 = m.Date
+				}
+			}
+			return data1.After(data2)
+		})
 		err := indexTemplate.Execute(w, chats)
 		if err != nil {
 			log.Err(err).Msg("Registered Execute error")

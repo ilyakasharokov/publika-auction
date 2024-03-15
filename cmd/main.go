@@ -53,7 +53,7 @@ func main() {
 		//panic(err)
 	}
 	fmt.Println(tgbot)
-	go tgbot.Start(ctx)
+	// go tgbot.Start(ctx)
 
 	srv := server.New(&cfg, bds, hb, mg, clRepo)
 	go handleSignals(ctx, srv.Cancel)
