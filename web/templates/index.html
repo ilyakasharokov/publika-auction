@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publika Auction - Главная</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        header {
+            background: #fff;
+            border-bottom: 1px solid #ddd;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        header ul {
+            list-style: none;
+            display: flex;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header a {
+            color: #0066cc;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        header a:hover {
+            color: #0052a3;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 32px;
+        }
+
+        h2 {
+            color: #ff6b6b;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #0052a3;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .lots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .lot-block {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: box-shadow 0.2s;
+        }
+
+        .lot-block:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .lot-block h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .lot-block p {
+            color: #666;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .lot-block a {
+            display: inline-block;
+            margin-top: 15px;
+            color: #0066cc;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .lot-block a:hover {
+            text-decoration: underline;
+        }
+
+        .sold {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .message-section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 30px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 4px;
+            margin-top: 15px;
+            border: 1px solid #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <ul>
+            <li><a href="/main">Главная</a></li>
+            <li><a href="/chats">Чаты/участники</a></li>
+            <li><a href="/registered">Зарегистрированные</a></li>
+        </ul>
+    </header>
+
+    <div class="container">
+        <h1>Лоты</h1>
+
+        <div class="controls">
+            {{if .Start}}
+                <h2>⏱️ Аукцион в процессе...</h2>
+            {{else}}
+                <form action="" method="post" style="display: inline;">
+                    <input type="hidden" value="start" name="start">
+                    <button type="submit">Начать аукцион</button>
+                </form>
+            {{end}}
+        </div>
+
+        <div class="lots-grid">
+            {{range .Items}}
+                <div class="lot-block">
+                    <h3>Лот #{{.Id}}</h3>
+                    {{if gt .SoldFor 0}}
+                        <p class="sold">✓ ПРОДАНО ЗА {{.SoldFor}}</p>
+                    {{end}}
+                    <p>📊 Ставок: {{.GetBidsCount}}</p>
+                    {{if gt .MaxConfirmed 30000}}
+                        <p>💰 Макс. подтвержденная: {{.MaxConfirmed}}</p>
+                        <p>⏰ {{.MaxBid.Date.Format "15:04:05"}} {{.MaxBid.Client.TgUsername}}</p>
+                    {{end}}
+                    <a href="/lot{{.Id}}">📋 Просмотреть ставки</a>
+                </div>
+            {{end}}
+        </div>
+
+        <div class="message-section">
+            <h2>📢 Отправить сообщение всем участникам</h2>
+            <form action="" method="post">
+                <textarea name="message" placeholder="Введите сообщение..."></textarea>
+                <button type="submit">Отправить</button>
+                {{if .Sent}}
+                    <div class="success-message">✓ Сообщение успешно отправлено всем участникам</div>
+                {{end}}
+            </form>
+        </div>
+    </div>
+</body>
+</html>
