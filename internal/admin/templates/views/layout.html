@@ -1,0 +1,44 @@
+{{define "layout"}}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{block "title" .}}Аукцион Admin{{end}}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <style>
+    body { padding: 0; }
+    nav { padding: 0.5rem 1rem; background: var(--pico-primary-background); }
+    nav a { color: #fff; margin-right: 1rem; text-decoration: none; font-weight: bold; }
+    nav a:hover { text-decoration: underline; }
+    .container { padding: 1.5rem; }
+    .badge-active   { background: #2ecc71; color: #fff; padding: 2px 8px; border-radius: 4px; font-size:.8rem; }
+    .badge-draft    { background: #95a5a6; color: #fff; padding: 2px 8px; border-radius: 4px; font-size:.8rem; }
+    .badge-ended    { background: #e74c3c; color: #fff; padding: 2px 8px; border-radius: 4px; font-size:.8rem; }
+    .badge-sold     { background: #e74c3c; color: #fff; padding: 2px 8px; border-radius: 4px; font-size:.8rem; }
+    .badge-pulled   { background: #bdc3c7; color: #fff; padding: 2px 8px; border-radius: 4px; font-size:.8rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 0.5rem; border-bottom: 1px solid var(--pico-table-border-color); }
+    .actions form { display: inline; }
+    .highlight { background: #fffbe6; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/admin/auctions">🔨 Аукционы</a>
+    <a href="/admin/clients">👥 Участники</a>
+    <a href="/admin/settings">🤖 Бот</a>
+    <a href="/metrics" target="_blank">📊 Метрики</a>
+    <span style="float:right">
+      <form method="post" action="/admin/logout" style="display:inline">
+        <button class="outline contrast" style="padding:2px 10px;font-size:.85rem">Выход</button>
+      </form>
+    </span>
+  </nav>
+  <div class="container">
+    {{block "content" .}}{{end}}
+  </div>
+</body>
+</html>
+{{end}}

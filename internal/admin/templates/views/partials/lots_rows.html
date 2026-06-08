@@ -1,0 +1,26 @@
+{{define "lots_rows.html"}}
+{{range .Lots}}
+{{$state := index $.LotStates .ID}}
+<tr {{if eq (str .Status) "sold"}}class="highlight"{{end}}>
+  <td>{{.Num}}</td>
+  <td><a href="/admin/auctions/{{$.Auction.Slug}}/lots/{{.Num}}">{{.Title}}</a></td>
+  <td>{{.StartPrice}} ₽</td>
+  <td><strong>{{$state.MaxAmount}} ₽</strong></td>
+  <td>{{$state.BidCount}}</td>
+  <td>
+    {{if eq (str .Status) "active"}}<span class="badge-active">Активен</span>
+    {{else if eq (str .Status) "sold"}}<span class="badge-sold">Продан</span>
+    {{else}}<span class="badge-pulled">Снят</span>{{end}}
+  </td>
+  <td class="actions">
+    {{if eq (str .Status) "active"}}
+    <a href="/admin/auctions/{{$.Auction.Slug}}/lots/{{.Num}}">Ставки</a>
+    &nbsp;
+    <form method="post" action="/admin/auctions/{{$.Auction.Slug}}/lots/{{.Num}}/pull">
+      <button class="outline secondary" style="padding:2px 8px;font-size:.8rem">Снять</button>
+    </form>
+    {{end}}
+  </td>
+</tr>
+{{end}}
+{{end}}

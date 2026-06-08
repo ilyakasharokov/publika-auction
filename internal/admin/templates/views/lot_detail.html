@@ -1,0 +1,57 @@
+{{define "title"}}Лот #{{.Lot.Num}} — {{.Lot.Title}}{{end}}
+{{define "content"}}
+<p><a href="/admin/auctions/{{.Auction.Slug}}">← {{.Auction.Title}}</a></p>
+
+<div style="display:flex;gap:2rem;margin-bottom:1.5rem;align-items:start">
+  {{if .Lot.PhotoURL}}
+  <img src="{{.Lot.PhotoURL}}" style="width:200px;height:auto;border-radius:8px;object-fit:cover">
+  {{end}}
+  <div>
+    <h2>Лот #{{.Lot.Num}} — {{.Lot.Title}}</h2>
+    {{if .Lot.Description}}<p>{{.Lot.Description}}</p>{{end}}
+    <p>Стартовая цена: <strong>{{.Lot.StartPrice}} ₽</strong></p>
+    <p>Текущий максимум: <strong id="cur-max">{{.State.MaxAmount}} ₽</strong>
+      ({{.State.BidCount}} ставок)</p>
+    <p>Статус:
+      {{if eq (str .Lot.Status) "active"}}<span class="badge-active">Активен</span>
+      {{else if eq (str .Lot.Status) "sold"}}<span class="badge-sold">Продан за {{.Lot.SoldFor}} ₽</span>
+      {{else}}<span class="badge-pulled">Снят</span>{{end}}
+    </p>
+  </div>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+  <h3>Ставки ({{len .Bids}})</h3>
+  <button class="outline" style="font-size:.8rem"
+    hx-get="/admin/auctions/{{.Auction.Slug}}/lots/{{.Lot.Num}}/bids"
+    hx-target="#bids-body"
+    hx-swap="innerHTML">↺ Обновить</button>
+</div>
+
+<table>
+  <thead><tr>
+    <th>Время</th><th>Телефон</th><th>Сумма</th><th>Действия</th>
+  </tr></thead>
+  <tbody id="bids-body"
+    hx-get="/admin/auctions/{{.Auction.Slug}}/lots/{{.Lot.Num}}/bids"
+    hx-trigger="every 3s"
+    hx-swap="innerHTML">
+  {{template "bids_rows" .}}
+  </tbody>
+</table>
+
+<script>
+  var lotID = '{{.Lot.ID}}';
+  var es = new EventSource('/admin/events');
+  es.addEventListener('bid_placed', function(e) {
+    var data = JSON.parse(e.data);
+    if (data.LotID === lotID) {
+      htmx.trigger(document.getElementById('bids-body'), 'refresh');
+    }
+  });
+  es.addEventListener('lot_sold', function(e) {
+    var data = JSON.parse(e.data);
+    if (data.LotID === lotID) { location.reload(); }
+  });
+</script>
+{{end}}

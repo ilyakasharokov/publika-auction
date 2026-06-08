@@ -16,7 +16,7 @@ RUN go mod download
 COPY . .
 
 # Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o auction ./cmd/auction
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o auction ./cmd
 
 # Final stage
 FROM alpine:latest
@@ -27,9 +27,6 @@ WORKDIR /root/
 
 # Copy binary from builder
 COPY --from=builder /app/auction .
-
-# Copy templates
-COPY --from=builder /app/web ./web
 
 # Expose port
 EXPOSE 8002

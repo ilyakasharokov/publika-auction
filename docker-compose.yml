@@ -3,8 +3,6 @@ version: '3.9'
 services:
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -15,11 +13,6 @@ services:
 
   mongo:
     image: mongo:6
-    ports:
-      - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
     volumes:
       - mongo_data:/data/db
     healthcheck:
@@ -34,12 +27,12 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8002:8002"
+    env_file: .env
     environment:
-      PUBLIKA_AUCTION_BOT_TOKEN: ${PUBLIKA_AUCTION_BOT_TOKEN}
       PUBLIKA_AUCTION_BOT_ADDR: :8002
-      PUBLIKA_AUCTION_BOT_UPDATE_DATA_PERIOD: 5m
-      REDIS_ADDR: redis:6379
-      MONGO_URI: mongodb://admin:password@mongo:27017
+      PUBLIKA_AUCTION_BOT_MONGO_URI: mongodb://mongo:27017
+      PUBLIKA_AUCTION_BOT_MONGO_DB: auction
+      PUBLIKA_AUCTION_BOT_REDIS_ADDR: redis:6379
     depends_on:
       redis:
         condition: service_healthy

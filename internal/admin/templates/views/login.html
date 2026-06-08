@@ -1,0 +1,12 @@
+{{define "title"}}Вход{{end}}
+{{define "content"}}
+<article style="max-width:400px;margin:4rem auto">
+  <h2>Вход в панель управления</h2>
+  {{if .Error}}<p style="color:red">{{.Error}}</p>{{end}}
+  <form method="post" action="/admin/login">
+    <label>Логин<input type="text" name="user" required autofocus></label>
+    <label>Пароль<input type="password" name="password" required></label>
+    <button type="submit" style="width:100%">Войти</button>
+  </form>
+</article>
+{{end}}

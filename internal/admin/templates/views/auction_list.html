@@ -1,0 +1,42 @@
+{{define "title"}}Аукционы{{end}}
+{{define "content"}}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+  <h2>Аукционы</h2>
+  <a href="/admin/auctions/new" role="button">+ Создать аукцион</a>
+</div>
+
+{{if not .Auctions}}
+<p>Аукционов пока нет. <a href="/admin/auctions/new">Создать первый</a></p>
+{{else}}
+<table>
+  <thead><tr>
+    <th>Название</th><th>Slug</th><th>Статус</th><th>Шаг ставки</th><th>Действия</th>
+  </tr></thead>
+  <tbody>
+  {{range .Auctions}}
+  <tr>
+    <td><a href="/admin/auctions/{{.Slug}}">{{.Title}}</a></td>
+    <td>{{.Slug}}</td>
+    <td>
+      {{if eq (str .Status) "active"}}<span class="badge-active">Активен</span>
+      {{else if eq (str .Status) "draft"}}<span class="badge-draft">Черновик</span>
+      {{else}}<span class="badge-ended">Завершён</span>{{end}}
+    </td>
+    <td>{{.BidStep}} ₽</td>
+    <td class="actions">
+      {{if eq (str .Status) "draft"}}
+      <form method="post" action="/admin/auctions/{{.Slug}}/activate">
+        <button>▶ Запустить</button>
+      </form>
+      {{else if eq (str .Status) "active"}}
+      <form method="post" action="/admin/auctions/{{.Slug}}/end">
+        <button class="secondary">⏹ Завершить</button>
+      </form>
+      {{end}}
+    </td>
+  </tr>
+  {{end}}
+  </tbody>
+</table>
+{{end}}
+{{end}}

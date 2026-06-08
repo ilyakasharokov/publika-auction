@@ -1,0 +1,13 @@
+{{define "title"}}Новый лот{{end}}
+{{define "content"}}
+<h2>Добавить лот в «{{.Auction.Title}}»</h2>
+{{if .Error}}<p style="color:red">{{.Error}}</p>{{end}}
+<form method="post" action="/admin/auctions/{{.Auction.Slug}}/lots">
+  <label>Название<input type="text" name="title" required placeholder="Картина Ивана Айвазовского"></label>
+  <label>Описание<textarea name="description" rows="3"></textarea></label>
+  <label>URL фотографии<input type="url" name="photo_url" placeholder="https://example.com/photo.jpg"></label>
+  <label>Стартовая цена (₽)<input type="number" name="start_price" value="30000" min="0" required></label>
+  <button type="submit">Добавить лот</button>
+  <a href="/admin/auctions/{{.Auction.Slug}}" role="button" class="secondary">Отмена</a>
+</form>
+{{end}}

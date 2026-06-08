@@ -1,0 +1,57 @@
+{{define "title"}}{{.Auction.Title}}{{end}}
+{{define "content"}}
+<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:1rem">
+  <div>
+    <h2>{{.Auction.Title}}</h2>
+    <p>Slug: <code>{{.Auction.Slug}}</code> &nbsp;|&nbsp; Шаг: {{.Auction.BidStep}} ₽</p>
+    {{if .Auction.Description}}<p>{{.Auction.Description}}</p>{{end}}
+  </div>
+  <div class="actions" style="text-align:right">
+    {{if eq (str .Auction.Status) "draft"}}
+    <form method="post" action="/admin/auctions/{{.Auction.Slug}}/activate">
+      <button>▶ Запустить</button>
+    </form>
+    {{else if eq (str .Auction.Status) "active"}}
+    <span class="badge-active">● Активен</span>
+    <form method="post" action="/admin/auctions/{{.Auction.Slug}}/end" style="margin-top:.5rem">
+      <button class="secondary">⏹ Завершить</button>
+    </form>
+    {{else}}
+    <span class="badge-ended">Завершён</span>
+    {{end}}
+  </div>
+</div>
+
+{{if eq (str .Auction.Status) "active"}}
+<details style="margin-bottom:1rem">
+  <summary>📢 Сообщение всем участникам</summary>
+  <form method="post" action="/admin/auctions/{{.Auction.Slug}}/broadcast" style="margin-top:.5rem">
+    <div style="display:flex;gap:.5rem">
+      <input type="text" name="message" placeholder="Текст сообщения..." required style="flex:1">
+      <button type="submit">Отправить</button>
+    </div>
+  </form>
+</details>
+{{end}}
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+  <h3>Лоты ({{len .Lots}})</h3>
+  <a href="/admin/auctions/{{.Auction.Slug}}/lots/new" role="button" class="outline">+ Добавить лот</a>
+</div>
+
+{{if not .Lots}}
+<p>Лотов нет. <a href="/admin/auctions/{{.Auction.Slug}}/lots/new">Добавить первый</a></p>
+{{else}}
+<table>
+  <thead><tr>
+    <th>#</th><th>Название</th><th>Старт</th><th>Тек. ставка</th><th>Ставок</th><th>Статус</th><th>Действия</th>
+  </tr></thead>
+  <tbody id="lot-table"
+    hx-get="/admin/auctions/{{.Auction.Slug}}/lots-refresh"
+    hx-trigger="every 5s"
+    hx-swap="innerHTML">
+  {{template "lots_rows.html" .}}
+  </tbody>
+</table>
+{{end}}
+{{end}}

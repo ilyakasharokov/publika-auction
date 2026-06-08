@@ -1,0 +1,13 @@
+{{define "title"}}Новый аукцион{{end}}
+{{define "content"}}
+<h2>Создать аукцион</h2>
+{{if .Error}}<p style="color:red">{{.Error}}</p>{{end}}
+<form method="post" action="/admin/auctions">
+  <label>Slug (URL-идентификатор, латиница)<input type="text" name="slug" required placeholder="spring-2025"></label>
+  <label>Название<input type="text" name="title" required placeholder="Весенний аукцион 2025"></label>
+  <label>Описание<textarea name="description" rows="3"></textarea></label>
+  <label>Минимальный шаг ставки (₽)<input type="number" name="bid_step" value="2000" min="100" required></label>
+  <button type="submit">Создать</button>
+  <a href="/admin/auctions" role="button" class="secondary">Отмена</a>
+</form>
+{{end}}

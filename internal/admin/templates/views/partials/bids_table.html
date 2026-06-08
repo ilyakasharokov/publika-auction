@@ -1,0 +1,31 @@
+{{define "bids_table.html"}}
+{{template "bids_rows" .}}
+{{end}}
+
+{{define "bids_rows"}}
+{{if not .Bids}}
+<tr><td colspan="4" style="text-align:center;color:#999">Ставок пока нет</td></tr>
+{{else}}
+{{range .Bids}}
+<tr>
+  <td style="font-size:.85rem">{{.PlacedAt.Format "15:04:05"}}</td>
+  <td>{{.Phone}}</td>
+  <td><strong>{{.Amount}} ₽</strong>
+    {{if eq .ID $.State.MaxBidID}}<span class="badge-active" style="margin-left:4px">MAX</span>{{end}}
+  </td>
+  <td class="actions">
+    {{if $.Auction}}{{if eq (str $.Lot.Status) "active"}}
+    <form method="post" action="/admin/auctions/{{$.Auction.Slug}}/lots/{{$.Lot.Num}}/sell">
+      <input type="hidden" name="bid_id" value="{{.ID}}">
+      <button style="padding:2px 8px;font-size:.75rem;background:#2ecc71;border:none;color:#fff;border-radius:4px">✓ Продать</button>
+    </form>
+    &nbsp;
+    <form method="post" action="/admin/auctions/{{$.Auction.Slug}}/lots/{{$.Lot.Num}}/bids/{{.ID}}/cancel">
+      <button class="outline secondary" style="padding:2px 8px;font-size:.75rem">✗</button>
+    </form>
+    {{end}}{{end}}
+  </td>
+</tr>
+{{end}}
+{{end}}
+{{end}}

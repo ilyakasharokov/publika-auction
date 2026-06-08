@@ -1,0 +1,63 @@
+{{define "title"}}{{.Client.Phone}}{{end}}
+{{define "content"}}
+<p><a href="/admin/clients">← Участники</a></p>
+
+<div style="display:flex;justify-content:space-between;align-items:start">
+  <div>
+    <h2>{{.Client.TgFirstName}} {{.Client.TgLastName}}</h2>
+    <p>Телефон: <strong>{{.Client.Phone}}</strong></p>
+    {{if .Client.TgUsername}}<p>Telegram: @{{.Client.TgUsername}}</p>{{end}}
+    <p>Статус: {{if .Client.IsBlocked}}<span class="badge-ended">Заблокирован</span>
+    {{else}}<span class="badge-active">Активен</span>{{end}}</p>
+  </div>
+  {{if not .Client.IsBlocked}}
+  <form method="post" action="/admin/clients/{{.Client.Phone}}/block">
+    <button class="secondary outline">Заблокировать</button>
+  </form>
+  {{end}}
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:1.5rem">
+  <div>
+    <h3>Ставки ({{len .Bids}})</h3>
+    {{if .Bids}}
+    <table>
+      <thead><tr><th>Лот</th><th>Сумма</th><th>Время</th></tr></thead>
+      <tbody>
+      {{range .Bids}}
+      <tr>
+        <td>#{{.LotNum}}</td>
+        <td>{{.Amount}} ₽</td>
+        <td style="font-size:.8rem">{{.PlacedAt.Format "02.01 15:04"}}</td>
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+    {{else}}<p style="color:#999">Ставок нет</p>{{end}}
+  </div>
+
+  <div>
+    <h3>Чат</h3>
+    <div style="height:300px;overflow-y:auto;border:1px solid #ddd;padding:.5rem;border-radius:4px;margin-bottom:.5rem">
+      {{range .Messages}}
+      <div style="margin-bottom:.5rem">
+        <strong>{{.Author}}</strong>
+        <span style="font-size:.75rem;color:#999">{{.CreatedAt.Format "15:04"}}</span>
+        <br>{{.Text}}
+      </div>
+      {{else}}
+      <p style="color:#999">Сообщений нет</p>
+      {{end}}
+    </div>
+    {{if .Sent}}<p style="color:green">✓ Отправлено</p>{{end}}
+    {{if .Client.TgUserID}}
+    <form method="post" action="/admin/clients/{{.Client.Phone}}">
+      <div style="display:flex;gap:.5rem">
+        <input type="text" name="message" placeholder="Сообщение..." required style="flex:1">
+        <button type="submit">Отправить</button>
+      </div>
+    </form>
+    {{else}}<p style="color:#999;font-size:.85rem">Клиент не авторизован в боте</p>{{end}}
+  </div>
+</div>
+{{end}}

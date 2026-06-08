@@ -7,10 +7,10 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 build: ## Build the application
-	go build -o bin/auction ./cmd/auction
+	go build -o bin/auction ./cmd
 
 run: ## Run the application
-	go run ./cmd/auction
+	go run ./cmd
 
 test: ## Run tests
 	go test -v -race -coverprofile=coverage.out ./...
