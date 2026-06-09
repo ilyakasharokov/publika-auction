@@ -129,6 +129,8 @@ authSuccess:
 		}
 	}
 
+	c.sendLotsKeyboard()
+
 	for {
 		select {
 		case inUpd, ok := <-c.in:
