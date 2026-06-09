@@ -21,12 +21,29 @@ type Chat struct {
 	client     *domain.Client
 
 	in  chan tgbotapi.Update
-	out chan tgbotapi.Chattable
+	out chan tgbotapi.Chattable // structured messages: photos, keyboards
 
-	hub        *Hub
-	bidSvc     *bidsvc.Service
-	clientSvc  *clientsvc.Service
+	hub       *Hub
+	bidSvc    *bidsvc.Service
+	clientSvc *clientsvc.Service
 	currentLot int
+}
+
+// sendText routes plain text through the TG queue (rate-limited, retry on 429).
+// Falls back to the direct out channel if broadcaster is not yet connected.
+func (c *Chat) sendText(text string) {
+	c.hub.mu.RLock()
+	b := c.hub.broadcaster
+	c.hub.mu.RUnlock()
+	if b != nil {
+		b.Send(c.ID, text)
+		return
+	}
+	select {
+	case c.out <- tgbotapi.NewMessage(c.ID, text):
+	default:
+		log.Warn().Int64("id", c.ID).Msg("chat out full, text message dropped")
+	}
 }
 
 func (c *Chat) SendTo(update tgbotapi.Update) {
@@ -38,7 +55,6 @@ func (c *Chat) Run(onReturn func()) {
 
 	sharePhoneBtn := tgbotapi.NewKeyboardButtonContact("ПОДЕЛИТЬСЯ НОМЕРОМ")
 
-	// Check if already known by TG ID
 	if cl, ok := c.clientSvc.GetByTgID(context.Background(), c.ID); ok {
 		c.client = cl
 		select {
@@ -104,7 +120,7 @@ authSuccess:
 	c.out <- greeting
 
 	if !c.hub.IsStarted() {
-		c.out <- tgbotapi.NewMessage(c.ID, "Аукцион скоро начнётся, ожидайте!")
+		c.sendText("Аукцион скоро начнётся, ожидайте!")
 	waitStart:
 		for {
 			select {
@@ -118,7 +134,7 @@ authSuccess:
 				if c.hub.IsStarted() {
 					break waitStart
 				}
-				c.out <- tgbotapi.NewMessage(c.ID, "Аукцион скоро начнётся, ожидайте!")
+				c.sendText("Аукцион скоро начнётся, ожидайте!")
 			default:
 				if !c.hub.IsStarted() {
 					time.Sleep(3 * time.Second)
@@ -151,7 +167,7 @@ authSuccess:
 				sum, _ := strconv.Atoi(inMsg.Text)
 				if c.currentLot != 0 && sum > 0 {
 					if c.client.IsBlocked {
-						c.out <- tgbotapi.NewMessage(c.ID, "Вы в чёрном списке. Ставки не принимаются.")
+						c.sendText("Вы в чёрном списке. Ставки не принимаются.")
 						continue
 					}
 					c.addBet(sum)
@@ -173,7 +189,7 @@ authSuccess:
 					c.sendLotKeyboard()
 				case sum > 0:
 					if c.client.IsBlocked {
-						c.out <- tgbotapi.NewMessage(c.ID, "Вы в чёрном списке. Ставки не принимаются.")
+						c.sendText("Вы в чёрном списке. Ставки не принимаются.")
 						continue
 					}
 					c.addBet(sum)
@@ -189,12 +205,12 @@ authSuccess:
 func (c *Chat) addBet(sum int) {
 	auction := c.hub.GetActiveAuction()
 	if auction == nil {
-		c.out <- tgbotapi.NewMessage(c.ID, "Аукцион не активен.")
+		c.sendText("Аукцион не активен.")
 		return
 	}
 	lot := c.hub.GetLotByNum(c.currentLot)
 	if lot == nil {
-		c.out <- tgbotapi.NewMessage(c.ID, "Лот не найден.")
+		c.sendText("Лот не найден.")
 		return
 	}
 
@@ -211,20 +227,26 @@ func (c *Chat) addBet(sum int) {
 	if err != nil {
 		var tooLow bidsvc.ErrBidTooLowDetail
 		if errors.As(err, &tooLow) {
-			c.out <- tgbotapi.NewMessage(c.ID, "Текущая ставка "+strconv.Itoa(tooLow.Current)+"₽ (минимальный шаг "+strconv.Itoa(auction.BidStep)+"₽)")
+			c.sendText("Текущая ставка " + strconv.Itoa(tooLow.Current) + "₽ (минимальный шаг " + strconv.Itoa(auction.BidStep) + "₽)")
 			return
 		}
 		if errors.Is(err, bidsvc.ErrLotSold) {
-			c.out <- tgbotapi.NewMessage(c.ID, "Лот уже продан.")
+			c.sendText("Лот уже продан.")
 			return
 		}
-		c.out <- tgbotapi.NewMessage(c.ID, "Попробуйте ещё раз.")
+		c.sendText("Попробуйте ещё раз.")
 		return
 	}
+	// Bid accepted — send with Back keyboard via the direct channel (structural msg).
 	msg := tgbotapi.NewMessage(c.ID, "Ставка принята: Лот #"+strconv.Itoa(c.currentLot)+" — "+strconv.Itoa(sum)+"₽")
 	rows := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("◀ Назад", "back"))
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(rows)
-	c.out <- msg
+	select {
+	case c.out <- msg:
+	default:
+		// Queue full — fall back to plain text via broadcaster.
+		c.sendText("Ставка принята: Лот #" + strconv.Itoa(c.currentLot) + " — " + strconv.Itoa(sum) + "₽")
+	}
 }
 
 func (c *Chat) sendLotsKeyboard() {
@@ -236,7 +258,7 @@ func (c *Chat) sendLotsKeyboard() {
 		}
 	}
 	if len(activeLots) == 0 {
-		c.out <- tgbotapi.NewMessage(c.ID, "Активных лотов пока нет.")
+		c.sendText("Активных лотов пока нет.")
 		return
 	}
 	msg := tgbotapi.NewMessage(c.ID, "Выберите лот:")
@@ -253,7 +275,11 @@ func (c *Chat) sendLotsKeyboard() {
 		rows = append(rows, tgbotapi.NewInlineKeyboardRow(row...))
 	}
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(rows...)
-	c.out <- msg
+	select {
+	case c.out <- msg:
+	default:
+		log.Warn().Int64("id", c.ID).Msg("chat out full, lots keyboard dropped")
+	}
 }
 
 func (c *Chat) sendLotKeyboard() {
@@ -278,7 +304,10 @@ func (c *Chat) sendLotKeyboard() {
 	if lot.PhotoURL != "" {
 		photo := tgbotapi.NewPhoto(c.ID, tgbotapi.FileURL(lot.PhotoURL))
 		photo.Caption = lot.Title
-		c.out <- photo
+		select {
+		case c.out <- photo:
+		default:
+		}
 	}
 
 	msg := tgbotapi.NewMessage(c.ID,
@@ -298,7 +327,11 @@ func (c *Chat) sendLotKeyboard() {
 		},
 	}
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(rows...)
-	c.out <- msg
+	select {
+	case c.out <- msg:
+	default:
+		log.Warn().Int64("id", c.ID).Msg("chat out full, lot keyboard dropped")
+	}
 }
 
 func (c *Chat) SendLotKeyboard(lotNum int) tgbotapi.MessageConfig {
