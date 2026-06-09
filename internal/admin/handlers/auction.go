@@ -114,6 +114,7 @@ func (h *AuctionHandler) Activate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	a.Status = domain.AuctionActive
 	lots, _ := h.lotSvc.ListByAuction(r.Context(), a.ID)
 	h.hub.SetActiveAuction(a, lots)
 	http.Redirect(w, r, "/admin/auctions/"+slug, http.StatusFound)
