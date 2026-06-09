@@ -20,6 +20,15 @@ test-integration: ## Run integration tests (requires running MongoDB + Redis)
 
 test-all: test test-integration ## Run all tests
 
+bench: ## Run Go benchmarks (unit, no infrastructure)
+	go test -bench=. -benchmem -benchtime=5s ./internal/service/bid/...
+
+load: ## Run load tests against local infra (requires MongoDB + Redis)
+	go test -v -tags=load -timeout=60s ./test/...
+
+k6: ## Run k6 HTTP load test (requires app running + k6 installed)
+	k6 run -e AUCTION_SLUG=$(SLUG) -e LOT_NUM=$(LOT) test/k6/admin_panel.js
+
 coverage: test ## Open HTML coverage report
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report: coverage.html"
