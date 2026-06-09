@@ -66,7 +66,7 @@ type Service struct {
 	bidRepo  repo.BidRepo
 	lotRepo  repo.LotRepo
 	bidCache *cache.BidCache
-	lock     *lock.RedisLock
+	lock     lock.Locker
 	notifier Notifier
 	events   EventBroadcaster
 }
@@ -79,7 +79,7 @@ func New(
 	bidRepo repo.BidRepo,
 	lotRepo repo.LotRepo,
 	bidCache *cache.BidCache,
-	lock *lock.RedisLock,
+	lock lock.Locker,
 	notifier Notifier,
 	events EventBroadcaster,
 ) *Service {

@@ -9,6 +9,12 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
+// Locker is implemented by both RedisLock (production) and MutexLock (tests).
+type Locker interface {
+	Acquire(ctx context.Context, key string, ttl time.Duration) (token string, ok bool, err error)
+	Release(ctx context.Context, key, token string) error
+}
+
 type RedisLock struct {
 	client *redis.Client
 }

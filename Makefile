@@ -12,12 +12,17 @@ build: ## Build the application
 run: ## Run the application
 	go run ./cmd
 
-test: ## Run tests
-	go test -v -race -coverprofile=coverage.out ./...
+test: ## Run unit tests (no infrastructure required)
+	go test -v -race -coverprofile=coverage.out ./internal/...
 
-coverage: test ## Run tests with coverage report
+test-integration: ## Run integration tests (requires running MongoDB + Redis)
+	go test -v -race -tags=integration -count=1 ./test/...
+
+test-all: test test-integration ## Run all tests
+
+coverage: test ## Open HTML coverage report
 	go tool cover -html=coverage.out -o coverage.html
-	@echo "Coverage report generated: coverage.html"
+	@echo "Coverage report: coverage.html"
 
 clean: ## Clean build artifacts
 	rm -rf bin/ dist/ coverage.out coverage.html
