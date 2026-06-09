@@ -34,9 +34,19 @@ func New(bidSvc *bidsvc.Service, clientSvc *clientsvc.Service) *Hub {
 
 func (h *Hub) SetActiveAuction(a *domain.Auction, lots []*domain.Lot) {
 	h.mu.Lock()
-	defer h.mu.Unlock()
 	h.auction = a
 	h.lots = lots
+	var notify []*Chat
+	if a != nil && a.Status == domain.AuctionActive {
+		for _, c := range h.chats {
+			notify = append(notify, c)
+		}
+	}
+	h.mu.Unlock()
+
+	for _, c := range notify {
+		c.sendLotsKeyboard()
+	}
 }
 
 func (h *Hub) GetActiveAuction() *domain.Auction {
