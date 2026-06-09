@@ -174,13 +174,7 @@ func (h *AuctionHandler) Broadcast(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/auctions/"+slug, http.StatusFound)
 		return
 	}
-	// Send to all connected chats via hub.Out
-	all := h.hub.GetAllChats()
-	for _, ci := range all {
-		if ci.Client != nil && ci.Client.TgUserID != 0 {
-			h.hub.SendTo(ci.Client.TgUserID, msg)
-		}
-	}
+	h.hub.SendToAll(msg)
 	http.Redirect(w, r, "/admin/auctions/"+slug, http.StatusFound)
 }
 

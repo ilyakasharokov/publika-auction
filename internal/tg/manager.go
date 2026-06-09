@@ -105,6 +105,16 @@ func (m *Manager) Disconnect() {
 	log.Info().Msg("bot manager: disconnected")
 }
 
+// Queue returns the active TG send queue, or nil if not connected.
+func (m *Manager) Queue() *tgqueue.Queue {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.bot == nil {
+		return nil
+	}
+	return m.bot.Queue()
+}
+
 func (m *Manager) GetStatus() Status {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

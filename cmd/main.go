@@ -88,6 +88,8 @@ func main() {
 	if cfg.TG_TOKEN != "" {
 		if err := botManager.Connect(cfg.TG_TOKEN, cfg.TG_ENDPOINT); err != nil {
 			log.Warn().Err(err).Msg("telegram bot auto-connect failed")
+		} else {
+			h.SetBroadcaster(botManager.Queue())
 		}
 	} else {
 		log.Info().Msg("no TG_TOKEN set — configure bot via /admin/settings")

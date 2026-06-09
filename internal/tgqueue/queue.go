@@ -2,6 +2,8 @@ package tgqueue
 
 import (
 	"context"
+	"strings"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/rs/zerolog/log"
@@ -14,10 +16,9 @@ type NotifierIface interface {
 }
 
 type Msg struct {
-	ChatID  int64
-	Text    string
-	LotNum  int
-	Markup  interface{}
+	ChatID int64
+	Text   string
+	Markup interface{}
 }
 
 type TGSender interface {
@@ -63,20 +64,48 @@ func (q *Queue) worker(ctx context.Context) {
 		select {
 		case m := <-q.ch:
 			metrics.TGQueueDepth.Dec()
-			var msg tgbotapi.MessageConfig
-			if m.Markup != nil {
-				msg = tgbotapi.NewMessage(m.ChatID, m.Text)
-				msg.ReplyMarkup = m.Markup
-			} else {
-				msg = tgbotapi.NewMessage(m.ChatID, m.Text)
-			}
-			if _, err := q.bot.Send(msg); err != nil {
-				log.Err(err).Int64("chat_id", m.ChatID).Msg("tg send error")
-			} else {
-				metrics.TGMessagesSentTotal.WithLabelValues("queue").Inc()
-			}
+			q.sendWithRetry(ctx, m)
 		case <-ctx.Done():
 			return
 		}
 	}
+}
+
+func (q *Queue) sendWithRetry(ctx context.Context, m Msg) {
+	var msg tgbotapi.MessageConfig
+	if m.Markup != nil {
+		msg = tgbotapi.NewMessage(m.ChatID, m.Text)
+		msg.ReplyMarkup = m.Markup
+	} else {
+		msg = tgbotapi.NewMessage(m.ChatID, m.Text)
+	}
+
+	backoff := 1 * time.Second
+	for attempt := 0; attempt < 4; attempt++ {
+		_, err := q.bot.Send(msg)
+		if err == nil {
+			metrics.TGMessagesSentTotal.WithLabelValues("queue").Inc()
+			return
+		}
+		// Telegram rate-limit: retry after suggested delay.
+		if strings.Contains(err.Error(), "429") {
+			retryAfter := backoff
+			if te, ok := err.(*tgbotapi.Error); ok && te.RetryAfter > 0 {
+				retryAfter = time.Duration(te.RetryAfter) * time.Second
+			}
+			log.Warn().Int64("chat_id", m.ChatID).Dur("retry_after", retryAfter).Msg("tg rate limited, retrying")
+			select {
+			case <-time.After(retryAfter):
+			case <-ctx.Done():
+				return
+			}
+			backoff *= 2
+			continue
+		}
+		// Non-retryable error.
+		log.Err(err).Int64("chat_id", m.ChatID).Msg("tg send error")
+		return
+	}
+	log.Warn().Int64("chat_id", m.ChatID).Msg("tg send failed after retries, dropping")
+	metrics.TGMessagesDroppedTotal.Inc()
 }

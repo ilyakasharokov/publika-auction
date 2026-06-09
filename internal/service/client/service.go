@@ -126,3 +126,8 @@ func (s *Service) BroadcastToAll(ctx context.Context, text string) {
 		s.notifier.Send(c.TgUserID, text)
 	}
 }
+
+// CachedAllWithTgID returns all clients with a known TG ID from the in-memory cache.
+func (s *Service) CachedAllWithTgID() []*domain.Client {
+	return s.cache.GetAllWithTgID()
+}

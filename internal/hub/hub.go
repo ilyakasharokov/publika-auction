@@ -11,16 +11,22 @@ import (
 	clientsvc "publika-auction/internal/service/client"
 )
 
+// Broadcaster is anything that can send a TG message to a specific chat ID.
+type Broadcaster interface {
+	Send(tgID int64, text string)
+}
+
 type Hub struct {
-	mu     sync.RWMutex
-	chats  map[int64]*Chat
+	mu    sync.RWMutex
+	chats map[int64]*Chat
 
 	auction *domain.Auction
 	lots    []*domain.Lot
 
-	bidSvc    *bidsvc.Service
-	clientSvc *clientsvc.Service
-	Out       chan tgbotapi.Chattable
+	bidSvc      *bidsvc.Service
+	clientSvc   *clientsvc.Service
+	broadcaster Broadcaster
+	Out         chan tgbotapi.Chattable
 }
 
 func New(bidSvc *bidsvc.Service, clientSvc *clientsvc.Service) *Hub {
@@ -28,8 +34,15 @@ func New(bidSvc *bidsvc.Service, clientSvc *clientsvc.Service) *Hub {
 		chats:     make(map[int64]*Chat),
 		bidSvc:    bidSvc,
 		clientSvc: clientSvc,
-		Out:       make(chan tgbotapi.Chattable, 256),
+		Out:       make(chan tgbotapi.Chattable, 1024),
 	}
+}
+
+// SetBroadcaster wires the TG queue so hub.SendToAll uses it instead of hub.Out.
+func (h *Hub) SetBroadcaster(b Broadcaster) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.broadcaster = b
 }
 
 func (h *Hub) SetActiveAuction(a *domain.Auction, lots []*domain.Lot) {
@@ -115,11 +128,41 @@ func (h *Hub) SendTo(id int64, text string) {
 	h.mu.RLock()
 	c := h.chats[id]
 	h.mu.RUnlock()
+	msg := tgbotapi.NewMessage(id, text)
 	if c != nil {
-		c.out <- tgbotapi.NewMessage(id, text)
+		select {
+		case c.out <- msg:
+		default:
+			log.Warn().Int64("id", id).Msg("chat out channel full, message dropped")
+		}
 		return
 	}
-	h.Out <- tgbotapi.NewMessage(id, text)
+	select {
+	case h.Out <- msg:
+	default:
+		log.Warn().Int64("id", id).Msg("hub.Out full, message dropped")
+	}
+}
+
+// SendToAll sends text to every client with a known TG ID, routing through
+// the TG queue (rate-limited) rather than hub.Out (unbounded blocking).
+func (h *Hub) SendToAll(text string) {
+	h.mu.RLock()
+	b := h.broadcaster
+	clients := h.clientSvc.CachedAllWithTgID()
+	h.mu.RUnlock()
+
+	for _, cl := range clients {
+		if b != nil {
+			b.Send(cl.TgUserID, text)
+		} else {
+			select {
+			case h.Out <- tgbotapi.NewMessage(cl.TgUserID, text):
+			default:
+				log.Warn().Int64("id", cl.TgUserID).Msg("hub.Out full on broadcast, dropped")
+			}
+		}
+	}
 }
 
 func (h *Hub) GetAllChats() []ChatInfo {
