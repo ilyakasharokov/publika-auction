@@ -36,7 +36,7 @@ func (c *Chat) SendTo(update tgbotapi.Update) {
 func (c *Chat) Run(onReturn func()) {
 	defer onReturn()
 
-	sharePhoneBtn := tgbotapi.NewKeyboardButtonContact("SHARE PHONE NUMBER")
+	sharePhoneBtn := tgbotapi.NewKeyboardButtonContact("ПОДЕЛИТЬСЯ НОМЕРОМ")
 
 	// Check if already known by TG ID
 	if cl, ok := c.clientSvc.GetByTgID(context.Background(), c.ID); ok {
@@ -56,7 +56,7 @@ authLoop:
 				return
 			}
 			if inUpd.CallbackQuery != nil || (inUpd.Message != nil && inUpd.Message.Text == "/start") {
-				msg := tgbotapi.NewMessage(c.ID, "Hello! To participate in the auction we need your phone number.\n⬇️ Tap \"Share Phone Number\" below ⬇️")
+				msg := tgbotapi.NewMessage(c.ID, "Привет! Для участия в аукционе нужен ваш номер телефона.\n⬇️ Нажмите «Поделиться номером» ⬇️")
 				msg.ReplyMarkup = &tgbotapi.ReplyKeyboardMarkup{
 					Keyboard:        [][]tgbotapi.KeyboardButton{{sharePhoneBtn}},
 					ResizeKeyboard:  true,
@@ -88,7 +88,7 @@ authLoop:
 				c.clientSvc.RegisterOrUpdate(context.Background(), c.client)
 				break authLoop
 			}
-			msg := tgbotapi.NewMessage(c.ID, "⬇️ Tap \"Share Phone Number\" ⬇️")
+			msg := tgbotapi.NewMessage(c.ID, "⬇️ Нажмите «Поделиться номером» ⬇️")
 			msg.ReplyMarkup = &tgbotapi.ReplyKeyboardMarkup{
 				Keyboard:        [][]tgbotapi.KeyboardButton{{sharePhoneBtn}},
 				ResizeKeyboard:  true,
@@ -99,12 +99,12 @@ authLoop:
 	}
 
 authSuccess:
-	greeting := tgbotapi.NewMessage(c.ID, "Welcome, "+c.client.TgFirstName+"!")
+	greeting := tgbotapi.NewMessage(c.ID, "Привет, "+c.client.TgFirstName+"!")
 	greeting.ReplyMarkup = &tgbotapi.ReplyKeyboardRemove{RemoveKeyboard: true}
 	c.out <- greeting
 
 	if !c.hub.IsStarted() {
-		c.out <- tgbotapi.NewMessage(c.ID, "The auction will start soon. Stay tuned!")
+		c.out <- tgbotapi.NewMessage(c.ID, "Аукцион скоро начнётся, ожидайте!")
 	waitStart:
 		for {
 			select {
@@ -118,7 +118,7 @@ authSuccess:
 				if c.hub.IsStarted() {
 					break waitStart
 				}
-				c.out <- tgbotapi.NewMessage(c.ID, "The auction will start soon. Stay tuned!")
+				c.out <- tgbotapi.NewMessage(c.ID, "Аукцион скоро начнётся, ожидайте!")
 			default:
 				if !c.hub.IsStarted() {
 					time.Sleep(3 * time.Second)
@@ -151,7 +151,7 @@ authSuccess:
 				sum, _ := strconv.Atoi(inMsg.Text)
 				if c.currentLot != 0 && sum > 0 {
 					if c.client.IsBlocked {
-						c.out <- tgbotapi.NewMessage(c.ID, "You are blocked. Bids are not accepted.")
+						c.out <- tgbotapi.NewMessage(c.ID, "Вы в чёрном списке. Ставки не принимаются.")
 						continue
 					}
 					c.addBet(sum)
@@ -173,7 +173,7 @@ authSuccess:
 					c.sendLotKeyboard()
 				case sum > 0:
 					if c.client.IsBlocked {
-						c.out <- tgbotapi.NewMessage(c.ID, "You are blocked. Bids are not accepted.")
+						c.out <- tgbotapi.NewMessage(c.ID, "Вы в чёрном списке. Ставки не принимаются.")
 						continue
 					}
 					c.addBet(sum)
@@ -189,12 +189,12 @@ authSuccess:
 func (c *Chat) addBet(sum int) {
 	auction := c.hub.GetActiveAuction()
 	if auction == nil {
-		c.out <- tgbotapi.NewMessage(c.ID, "The auction is not active.")
+		c.out <- tgbotapi.NewMessage(c.ID, "Аукцион не активен.")
 		return
 	}
 	lot := c.hub.GetLotByNum(c.currentLot)
 	if lot == nil {
-		c.out <- tgbotapi.NewMessage(c.ID, "Lot not found.")
+		c.out <- tgbotapi.NewMessage(c.ID, "Лот не найден.")
 		return
 	}
 
@@ -211,18 +211,18 @@ func (c *Chat) addBet(sum int) {
 	if err != nil {
 		var tooLow bidsvc.ErrBidTooLowDetail
 		if errors.As(err, &tooLow) {
-			c.out <- tgbotapi.NewMessage(c.ID, "Current max bid is "+strconv.Itoa(tooLow.Current)+"₽ (min step "+strconv.Itoa(auction.BidStep)+"₽)")
+			c.out <- tgbotapi.NewMessage(c.ID, "Текущая ставка "+strconv.Itoa(tooLow.Current)+"₽ (минимальный шаг "+strconv.Itoa(auction.BidStep)+"₽)")
 			return
 		}
 		if errors.Is(err, bidsvc.ErrLotSold) {
-			c.out <- tgbotapi.NewMessage(c.ID, "This lot has already been sold.")
+			c.out <- tgbotapi.NewMessage(c.ID, "Лот уже продан.")
 			return
 		}
-		c.out <- tgbotapi.NewMessage(c.ID, "Please try again.")
+		c.out <- tgbotapi.NewMessage(c.ID, "Попробуйте ещё раз.")
 		return
 	}
-	msg := tgbotapi.NewMessage(c.ID, "Bid accepted: Lot #"+strconv.Itoa(c.currentLot)+" — "+strconv.Itoa(sum)+"₽")
-	rows := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("◀ Back", "back"))
+	msg := tgbotapi.NewMessage(c.ID, "Ставка принята: Лот #"+strconv.Itoa(c.currentLot)+" — "+strconv.Itoa(sum)+"₽")
+	rows := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("◀ Назад", "back"))
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(rows)
 	c.out <- msg
 }
@@ -236,10 +236,10 @@ func (c *Chat) sendLotsKeyboard() {
 		}
 	}
 	if len(activeLots) == 0 {
-		c.out <- tgbotapi.NewMessage(c.ID, "No active lots at the moment.")
+		c.out <- tgbotapi.NewMessage(c.ID, "Активных лотов пока нет.")
 		return
 	}
-	msg := tgbotapi.NewMessage(c.ID, "Choose a lot:")
+	msg := tgbotapi.NewMessage(c.ID, "Выберите лот:")
 	rows := make([][]tgbotapi.InlineKeyboardButton, 0)
 	row := make([]tgbotapi.InlineKeyboardButton, 0)
 	for _, lot := range activeLots {
@@ -247,7 +247,7 @@ func (c *Chat) sendLotsKeyboard() {
 			rows = append(rows, tgbotapi.NewInlineKeyboardRow(row...))
 			row = make([]tgbotapi.InlineKeyboardButton, 0)
 		}
-		row = append(row, tgbotapi.NewInlineKeyboardButtonData("Lot #"+strconv.Itoa(lot.Num), "lot"+strconv.Itoa(lot.Num)))
+		row = append(row, tgbotapi.NewInlineKeyboardButtonData("Лот #"+strconv.Itoa(lot.Num), "lot"+strconv.Itoa(lot.Num)))
 	}
 	if len(row) > 0 {
 		rows = append(rows, tgbotapi.NewInlineKeyboardRow(row...))
@@ -282,10 +282,10 @@ func (c *Chat) sendLotKeyboard() {
 	}
 
 	msg := tgbotapi.NewMessage(c.ID,
-		"Lot #"+strconv.Itoa(c.currentLot)+" — "+lot.Title+
-			"\nCurrent bid: "+strconv.Itoa(current)+"₽"+
-			"\nMin step: "+strconv.Itoa(step)+"₽"+
-			"\n\nEnter an amount or pick a quick bid:")
+		"Лот #"+strconv.Itoa(c.currentLot)+" — "+lot.Title+
+			"\nТекущая ставка: "+strconv.Itoa(current)+"₽"+
+			"\nМинимальный шаг: "+strconv.Itoa(step)+"₽"+
+			"\n\nВведите сумму или выберите быструю ставку:")
 	msg.ParseMode = "html"
 	rows := [][]tgbotapi.InlineKeyboardButton{
 		{
@@ -294,7 +294,7 @@ func (c *Chat) sendLotKeyboard() {
 		},
 		{
 			tgbotapi.NewInlineKeyboardButtonData("+"+strconv.Itoa(step*6)+" → "+s3+"₽", s3),
-			tgbotapi.NewInlineKeyboardButtonData("◀ Back to list", "back"),
+			tgbotapi.NewInlineKeyboardButtonData("◀ К списку", "back"),
 		},
 	}
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(rows...)
@@ -315,8 +315,8 @@ func (c *Chat) SendLotKeyboard(lotNum int) tgbotapi.MessageConfig {
 	}
 	step := auction.BidStep
 	s1 := strconv.Itoa(current + step)
-	msg := tgbotapi.NewMessage(c.ID, "Lot #"+strconv.Itoa(lotNum)+" — "+lot.Title+"\nCurrent bid: "+strconv.Itoa(current)+"₽")
-	rows := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Bid "+s1+"₽", s1))
+	msg := tgbotapi.NewMessage(c.ID, "Лот #"+strconv.Itoa(lotNum)+" — "+lot.Title+"\nТекущая ставка: "+strconv.Itoa(current)+"₽")
+	rows := tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Поднять до "+s1+"₽", s1))
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(rows)
 	return msg
 }
