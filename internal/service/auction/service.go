@@ -64,6 +64,24 @@ func (s *Service) Activate(ctx context.Context, id string) error {
 	if a.Status == domain.AuctionActive {
 		return nil
 	}
+	// End any currently active auction before activating this one.
+	list, err := s.auctionRepo.List(ctx)
+	if err != nil {
+		return err
+	}
+	for _, other := range list {
+		if other.ID != id && other.Status == domain.AuctionActive {
+			if err := s.auctionRepo.UpdateStatus(ctx, other.ID, domain.AuctionEnded); err != nil {
+				log.Err(err).Str("auction_id", other.ID).Msg("activate: failed to end previous active auction")
+			} else {
+				log.Info().Str("ended", other.Slug).Str("activated", a.Slug).Msg("previous active auction ended automatically")
+				metrics.AuctionsActive.Dec()
+			}
+			if s.events != nil {
+				s.events.Publish(bidsvc.Event{Type: "auction_ended", AuctionID: other.ID})
+			}
+		}
+	}
 	if err := s.auctionRepo.UpdateStatus(ctx, id, domain.AuctionActive); err != nil {
 		return err
 	}

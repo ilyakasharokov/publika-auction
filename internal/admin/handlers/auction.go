@@ -99,11 +99,33 @@ func (h *AuctionHandler) Detail(w http.ResponseWriter, r *http.Request) {
 			states[lot.ID] = s
 		}
 	}
-	render(w, r, "auction_detail.html", auctionDetailData{Auction: a, Lots: lots, LotStates: states})
+	notice := ""
+	if n := r.URL.Query().Get("notice"); n != "" {
+		if len(n) > 6 && n[:6] == "ended:" {
+			notice = "Previous active auction \"" + n[6:] + "\" was automatically ended."
+		}
+	}
+	render(w, r, "auction_detail.html", map[string]interface{}{
+		"Auction":   a,
+		"Lots":      lots,
+		"LotStates": states,
+		"Notice":    notice,
+	})
 }
 
 func (h *AuctionHandler) Activate(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
+
+	// Find any currently active auction before activation (for notice).
+	allAuctions, _ := h.auctionSvc.List(r.Context())
+	var prevActive string
+	for _, other := range allAuctions {
+		if other.Slug != slug && string(other.Status) == "active" {
+			prevActive = other.Title
+			break
+		}
+	}
+
 	a, err := h.auctionSvc.GetBySlug(r.Context(), slug)
 	if err != nil {
 		http.NotFound(w, r)
@@ -117,6 +139,12 @@ func (h *AuctionHandler) Activate(w http.ResponseWriter, r *http.Request) {
 	a.Status = domain.AuctionActive
 	lots, _ := h.lotSvc.ListByAuction(r.Context(), a.ID)
 	h.hub.SetActiveAuction(a, lots)
+
+	if prevActive != "" {
+		// Pass a flash notice via query param.
+		http.Redirect(w, r, "/admin/auctions/"+slug+"?notice=ended:"+prevActive, http.StatusFound)
+		return
+	}
 	http.Redirect(w, r, "/admin/auctions/"+slug, http.StatusFound)
 }
 
