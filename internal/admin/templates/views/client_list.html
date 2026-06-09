@@ -1,12 +1,12 @@
-{{define "title"}}Участники{{end}}
+{{define "title"}}Clients{{end}}
 {{define "content"}}
-<h2>Участники ({{len .Clients}})</h2>
-<input type="search" placeholder="Поиск по телефону или имени..."
+<h2>Clients ({{len .Clients}})</h2>
+<input type="search" placeholder="Search by phone or name..."
   oninput="filterRows(this.value)" style="margin-bottom:1rem">
 
 <table id="clients-table">
   <thead><tr>
-    <th>Имя</th><th>Телефон</th><th>Telegram</th><th>Статус</th><th></th>
+    <th>Name</th><th>Phone</th><th>Telegram</th><th>Status</th><th></th>
   </tr></thead>
   <tbody>
   {{range .Clients}}
@@ -14,8 +14,8 @@
     <td>{{.Name}} {{.TgFirstName}} {{.TgLastName}}</td>
     <td><a href="/admin/clients/{{.Phone}}">{{.Phone}}</a></td>
     <td>{{if .TgUsername}}@{{.TgUsername}}{{end}}</td>
-    <td>{{if .IsBlocked}}<span class="badge-ended">Заблокирован</span>{{else}}<span class="badge-active">Активен</span>{{end}}</td>
-    <td><a href="/admin/clients/{{.Phone}}">Открыть →</a></td>
+    <td>{{if .IsBlocked}}<span class="badge-ended">Blocked</span>{{else}}<span class="badge-active">Active</span>{{end}}</td>
+    <td><a href="/admin/clients/{{.Phone}}">Open →</a></td>
   </tr>
   {{end}}
   </tbody>

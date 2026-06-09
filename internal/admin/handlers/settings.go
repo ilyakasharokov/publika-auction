@@ -27,14 +27,14 @@ func (h *SettingsHandler) Connect(w http.ResponseWriter, r *http.Request) {
 	if token == "" {
 		render(w, r, "settings.html", map[string]interface{}{
 			"Status": h.botManager.GetStatus(),
-			"Error":  "Токен не может быть пустым",
+			"Error":  "Token cannot be empty",
 		})
 		return
 	}
 	if err := h.botManager.Connect(token, endpoint); err != nil {
 		render(w, r, "settings.html", map[string]interface{}{
 			"Status": h.botManager.GetStatus(),
-			"Error":  "Ошибка подключения: " + err.Error(),
+			"Error":  "Connection failed: " + err.Error(),
 		})
 		return
 	}

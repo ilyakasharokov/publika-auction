@@ -1,4 +1,4 @@
-{{define "title"}}Настройки бота{{end}}
+{{define "title"}}Bot Settings{{end}}
 {{define "content"}}
 <h2>Telegram Bot</h2>
 
@@ -7,17 +7,17 @@
   <p>
     <span style="display:inline-flex;align-items:center;gap:.5rem">
       <span style="width:10px;height:10px;border-radius:50%;background:#2ecc71;display:inline-block"></span>
-      <strong>Подключён</strong> как @{{.Status.Username}}
+      <strong>Connected</strong> as @{{.Status.Username}}
     </span>
   </p>
   <form method="post" action="/admin/settings/disconnect">
-    <button class="secondary outline">Отключить бота</button>
+    <button class="secondary outline">Disconnect</button>
   </form>
   {{else}}
   <p>
     <span style="display:inline-flex;align-items:center;gap:.5rem">
       <span style="width:10px;height:10px;border-radius:50%;background:#e74c3c;display:inline-block"></span>
-      <strong>Не подключён</strong>
+      <strong>Disconnected</strong>
     </span>
   </p>
   {{end}}
@@ -26,7 +26,7 @@
 {{if .Error}}<p style="color:red">{{.Error}}</p>{{end}}
 
 <article style="max-width:500px">
-  <h3>{{if .Status.Connected}}Переподключить бота{{else}}Подключить бота{{end}}</h3>
+  <h3>{{if .Status.Connected}}Reconnect{{else}}Connect bot{{end}}</h3>
   <form method="post" action="/admin/settings/connect">
     <label>
       Bot Token
@@ -34,16 +34,16 @@
         value="{{.Status.Token}}"
         placeholder="123456789:AABBccdd..."
         required autocomplete="off">
-      <small>Получите токен у <a href="https://t.me/BotFather" target="_blank">@BotFather</a></small>
+      <small>Get a token from <a href="https://t.me/BotFather" target="_blank">@BotFather</a></small>
     </label>
     <label>
       API Endpoint
       <input type="text" name="endpoint"
         value="{{.Status.Endpoint}}"
         placeholder="https://api.telegram.org/bot%s/%s">
-      <small>Оставьте стандартным если не используете локальный сервер Telegram</small>
+      <small>Leave default unless you use a local Telegram Bot API server</small>
     </label>
-    <button type="submit">{{if .Status.Connected}}Переподключить{{else}}Подключить{{end}}</button>
+    <button type="submit">{{if .Status.Connected}}Reconnect{{else}}Connect{{end}}</button>
   </form>
 </article>
 {{end}}

@@ -1,137 +1,111 @@
-# Publika Auction Bot
+# Publika Auction
 
-Telegram бот для управления аукционом. Позволяет проводить онлайн-аукционы через Telegram с системой ставок.
+A flexible Telegram auction service with a real-time admin panel, optimised for high load.
 
-## 📋 Функциональность
+## Features
 
-- **Управление лотами** - просмотр и управление лотами аукциона
-- **Система ставок** - размещение и управление ставками через Telegram
-- **Чаты участников** - прямое общение с участниками
-- **Аналитика** - просмотр зарегистрированных участников и статистики ставок
-- **Мониторинг** - Prometheus метрики для отслеживания состояния бота
-- **Логирование** - структурированное логирование через Graylog
+- **Multiple auctions** — create and manage any number of auctions with configurable lots and bid steps
+- **Real-time admin panel** — live bid feed via SSE, htmx-powered UI, no page reloads
+- **High-load bid placement** — Redis distributed lock + in-memory cache + async MongoDB writes
+- **Telegram bot** — participants bid directly in Telegram; connect/disconnect the bot from the admin panel without restart
+- **Prometheus metrics** — bids/sec, lock contention, TG queue depth, HTTP latencies at `/metrics`
+- **Photo upload** — upload lot photos directly or provide a URL
 
-## 🛠️ Технологический стек
+## Stack
 
-- **Go 1.19+** - язык программирования
-- **Telegram Bot API** - интеграция с Telegram
-- **Redis** - кэширование и хранение состояния
-- **MongoDB** - база данных (опционально)
-- **Prometheus** - метрики
-- **Graylog** - централизованное логирование
+- **Go 1.19+** — backend
+- **MongoDB** — persistent storage
+- **Redis** — distributed bid locking
+- **Telegram Bot API** — participant interface
+- **Prometheus** — metrics
+- **htmx + Pico CSS** — admin panel (no build step)
 
-## 📦 Зависимости
+## Quick start
 
-```
-github.com/go-telegram-bot-api/telegram-bot-api/v5 - Telegram Bot API
-github.com/go-redis/redis/v8                         - Redis клиент
-github.com/prometheus/client_golang                  - Prometheus метрики
-github.com/rs/zerolog                                - Логирование
-github.com/joho/godotenv                             - Загрузка .env файлов
-github.com/google/uuid                               - UUID генератор
-```
+### Local development
 
-## 🚀 Начало работы
-
-### Требования
-
-- Go 1.19 или выше
-- Redis
-- Telegram Bot Token
-
-### Установка
-
-1. Клонируйте репозиторий:
 ```bash
-git clone https://github.com/ilyakasharokov/publika-auction.git
-cd publika-auction
-```
+# Start MongoDB and Redis
+docker compose up redis mongo -d
 
-2. Установите з��висимости:
-```bash
-go mod download
-go mod tidy
-```
-
-3. Создайте файл `.env` (скопируйте из `.env.example`):
-```bash
+# Copy and configure env
 cp .env.example .env
+
+# Run
+make run
 ```
 
-4. Отредактируйте `.env` с вашими параметрами:
-```env
-PUBLIKA_AUCTION_BOT_TOKEN=your_bot_token_here
-PUBLIKA_AUCTION_BOT_ADDR=:8002
-PUBLIKA_AUCTION_BOT_UPDATE_DATA_PERIOD=5m
-PUBLIKA_AUCTION_BOT_TG_ENDPOINT=https://api.telegram.org/bot%s/%s
-```
+Open **http://localhost:8002/admin** — default login `admin` / `changeme`.
 
-5. Запустите бота:
+### Full Docker
+
 ```bash
-go run ./cmd/auction
+docker compose up --build
 ```
 
-## 📁 Структура проекта
+## Configuration
+
+| Variable | Default | Description |
+|---|---|---|
+| `PUBLIKA_AUCTION_BOT_TOKEN` | — | Telegram bot token (or set from admin panel) |
+| `PUBLIKA_AUCTION_BOT_ADDR` | `:8002` | HTTP listen address |
+| `PUBLIKA_AUCTION_BOT_MONGO_URI` | `mongodb://localhost:27017` | MongoDB URI |
+| `PUBLIKA_AUCTION_BOT_MONGO_DB` | `auction` | MongoDB database name |
+| `PUBLIKA_AUCTION_BOT_REDIS_ADDR` | `localhost:6379` | Redis address |
+| `PUBLIKA_AUCTION_BOT_ADMIN_USER` | `admin` | Admin panel username |
+| `PUBLIKA_AUCTION_BOT_ADMIN_PASSWORD` | `changeme` | Admin panel password |
+| `PUBLIKA_AUCTION_BOT_SESSION_SECRET` | — | HMAC session signing key (change in production) |
+| `PUBLIKA_AUCTION_BOT_BID_STEP` | `2000` | Default minimum bid increment |
+
+## Admin panel
+
+| Route | Description |
+|---|---|
+| `/admin/auctions` | List, create, activate, and end auctions |
+| `/admin/auctions/{slug}` | Auction detail — lot grid with live status |
+| `/admin/auctions/{slug}/lots/{num}` | Lot detail — live bid table, sell/cancel bids |
+| `/admin/clients` | Registered participants |
+| `/admin/clients/{phone}` | Client detail — bid history and chat |
+| `/admin/settings` | Connect / disconnect Telegram bot |
+| `/metrics` | Prometheus metrics |
+| `/health` | Liveness probe |
+
+## Auction lifecycle
 
 ```
-publika-auction/
-├── cmd/
-│   └── auction/
-│       └── main.go              # Точка входа приложения
-├── internal/
-│   ├── bot/                     # Логика Telegram бота
-│   ├── models/                  # Структуры данных
-│   ├── handlers/                # HTTP обработчики
-│   ├── storage/                 # Работа с БД и Redis
-│   └── services/                # Бизнес-логика
-├── web/
-│   ├── templates/               # HTML шаблоны
-│   └── static/                  # Статические ресурсы
-├── migrations/                  # Миграции БД
-├── go.mod                        # Go модули
-├── go.sum                        # Зависимости
-├── .env.example                 # Пример конфигурации
-├── .gitignore                   # Git исключения
-└── README.md                     # Данный файл
+draft → active → ended
 ```
 
-## 🔧 API эндпоинты
+1. Create an auction (slug + bid step)
+2. Add lots (title, description, photo, starting price)
+3. **Start** — activates the auction; bot begins accepting bids immediately
+4. On each lot detail page click **✓ Sell** next to the winning bid
+5. **End** — closes the auction
 
-| Метод | Эндпоинт | Описание |
-|-------|----------|----------|
-| GET | `/main` | Главная страница с лотами |
-| GET | `/lot/:id` | Детали лота и история ставок |
-| GET | `/chats` | Список чатов с участниками |
-| GET | `/registered` | Список зарегистрированных участников |
-| POST | `/` | Принятие обновлений от Telegram |
+## Architecture
 
-## 📊 Метрики Prometheus
+```
+cmd/main.go
+internal/
+├── domain/      Auction, Lot, Bid, Client types
+├── repo/        Interfaces + MongoDB implementations + in-memory caches
+├── service/     Bid placement, auction lifecycle, client management
+├── lock/        Redis distributed lock (SET NX PX + Lua release)
+├── tgqueue/     Buffered TG send queue (1000 cap, 3 workers)
+├── hub/         Telegram chat state machine
+├── tg/          Bot runner + hot-plug manager
+├── metrics/     Prometheus metric definitions
+└── admin/       HTTP handlers, SSE hub, embedded HTML templates
+```
 
-Бот автоматически собирает метрики:
-- Количество обработанных обновлений
-- Время обработки запросов
-- Ошибки в работе
+### Bid placement (~3ms critical section)
 
-Доступны на эндпоинте `/metrics`
+1. Check in-memory cache — reject early if amount is too low (no Redis round-trip)
+2. Acquire Redis lock on `lock:{auctionID}:{lotID}` (500ms TTL)
+3. Re-check under lock
+4. Update cache, release lock
+5. Async: write to MongoDB + notify outbid participant + publish SSE event
 
-## 🔐 Безопасность
-
-- Не коммитьте реальные значения в `.env` файл
-- Используйте `.env.example` как шаблон
-- Регулярно обновляйте зависимости
-- Подключите двухфакторную аутентификацию Telegram аккаунта
-
-## 🤝 Контрибьютинг
-
-1. Создайте новую ветку: `git checkout -b feature/your-feature`
-2. Сделайте изменения и коммитьте: `git commit -am 'Add feature'`
-3. Пушьте в ветку: `git push origin feature/your-feature`
-4. Откройте Pull Request
-
-## 📝 Лицензия
+## License
 
 MIT
-
-## 👤 Автор
-
-[ilyakasharokov](https://github.com/ilyakasharokov)

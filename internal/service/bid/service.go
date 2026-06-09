@@ -154,7 +154,7 @@ func (s *Service) PlaceBid(ctx context.Context, req PlaceBidRequest) (*domain.Bi
 	}()
 
 	if prevTgID != 0 && prevTgID != req.TgUserID && prevBidID != "" {
-		go s.notifier.Send(prevTgID, "Вашу ставку на лот #"+strconv.Itoa(req.LotNum)+" перебили.\nНовая ставка "+strconv.Itoa(req.Amount)+"р")
+		go s.notifier.Send(prevTgID, "Your bid on lot #"+strconv.Itoa(req.LotNum)+" was outbid.\nNew bid: "+strconv.Itoa(req.Amount)+"₽")
 	}
 
 	metrics.BidsPlacedTotal.WithLabelValues(req.AuctionSlug, strconv.Itoa(req.LotNum)).Inc()
@@ -195,7 +195,7 @@ func (s *Service) SellLot(ctx context.Context, lotID, bidID string) error {
 		s.bidCache.Set(bid.AuctionID, lotID, state)
 	}
 
-	go s.notifier.Send(bid.TgUserID, "Поздравляем! Лот #"+strconv.Itoa(lot.Num)+" продан вам за "+strconv.Itoa(bid.Amount)+"р")
+	go s.notifier.Send(bid.TgUserID, "Congratulations! Lot #"+strconv.Itoa(lot.Num)+" is yours for "+strconv.Itoa(bid.Amount)+"₽")
 
 	metrics.LotsSoldTotal.WithLabelValues(state.AuctionSlug).Inc()
 	metrics.LotsActive.Dec()

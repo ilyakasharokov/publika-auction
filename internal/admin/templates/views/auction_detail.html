@@ -3,48 +3,48 @@
 <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:1rem">
   <div>
     <h2>{{.Auction.Title}}</h2>
-    <p>Slug: <code>{{.Auction.Slug}}</code> &nbsp;|&nbsp; Шаг: {{.Auction.BidStep}} ₽</p>
+    <p>Slug: <code>{{.Auction.Slug}}</code> &nbsp;|&nbsp; Bid step: {{.Auction.BidStep}} ₽</p>
     {{if .Auction.Description}}<p>{{.Auction.Description}}</p>{{end}}
   </div>
   <div class="actions" style="text-align:right">
     {{if eq (str .Auction.Status) "draft"}}
     <form method="post" action="/admin/auctions/{{.Auction.Slug}}/activate">
-      <button>▶ Запустить</button>
+      <button>▶ Start</button>
     </form>
     {{else if eq (str .Auction.Status) "active"}}
-    <span class="badge-active">● Активен</span>
+    <span class="badge-active">● Active</span>
     <form method="post" action="/admin/auctions/{{.Auction.Slug}}/end" style="margin-top:.5rem">
-      <button class="secondary">⏹ Завершить</button>
+      <button class="secondary">⏹ End auction</button>
     </form>
     {{else}}
-    <span class="badge-ended">Завершён</span>
+    <span class="badge-ended">Ended</span>
     {{end}}
   </div>
 </div>
 
 {{if eq (str .Auction.Status) "active"}}
 <details style="margin-bottom:1rem">
-  <summary>📢 Сообщение всем участникам</summary>
+  <summary>📢 Broadcast message to all participants</summary>
   <form method="post" action="/admin/auctions/{{.Auction.Slug}}/broadcast" style="margin-top:.5rem">
     <div style="display:flex;gap:.5rem">
-      <input type="text" name="message" placeholder="Текст сообщения..." required style="flex:1">
-      <button type="submit">Отправить</button>
+      <input type="text" name="message" placeholder="Message text..." required style="flex:1">
+      <button type="submit">Send</button>
     </div>
   </form>
 </details>
 {{end}}
 
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
-  <h3>Лоты ({{len .Lots}})</h3>
-  <a href="/admin/auctions/{{.Auction.Slug}}/lots/new" role="button" class="outline">+ Добавить лот</a>
+  <h3>Lots ({{len .Lots}})</h3>
+  <a href="/admin/auctions/{{.Auction.Slug}}/lots/new" role="button" class="outline">+ Add lot</a>
 </div>
 
 {{if not .Lots}}
-<p>Лотов нет. <a href="/admin/auctions/{{.Auction.Slug}}/lots/new">Добавить первый</a></p>
+<p>No lots yet. <a href="/admin/auctions/{{.Auction.Slug}}/lots/new">Add the first one</a></p>
 {{else}}
 <table>
   <thead><tr>
-    <th>#</th><th>Название</th><th>Старт</th><th>Тек. ставка</th><th>Ставок</th><th>Статус</th><th>Действия</th>
+    <th>#</th><th>Title</th><th>Start price</th><th>Current bid</th><th>Bids</th><th>Status</th><th>Actions</th>
   </tr></thead>
   <tbody id="lot-table"
     hx-get="/admin/auctions/{{.Auction.Slug}}/lots-refresh"

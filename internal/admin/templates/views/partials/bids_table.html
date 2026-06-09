@@ -4,7 +4,7 @@
 
 {{define "bids_rows"}}
 {{if not .Bids}}
-<tr><td colspan="4" style="text-align:center;color:#999">Ставок пока нет</td></tr>
+<tr><td colspan="4" style="text-align:center;color:#999">No bids yet</td></tr>
 {{else}}
 {{range .Bids}}
 <tr>
@@ -17,7 +17,7 @@
     {{if $.Auction}}{{if eq (str $.Lot.Status) "active"}}
     <form method="post" action="/admin/auctions/{{$.Auction.Slug}}/lots/{{$.Lot.Num}}/sell">
       <input type="hidden" name="bid_id" value="{{.ID}}">
-      <button style="padding:2px 8px;font-size:.75rem;background:#2ecc71;border:none;color:#fff;border-radius:4px">✓ Продать</button>
+      <button style="padding:2px 8px;font-size:.75rem;background:#2ecc71;border:none;color:#fff;border-radius:4px">✓ Sell</button>
     </form>
     &nbsp;
     <form method="post" action="/admin/auctions/{{$.Auction.Slug}}/lots/{{$.Lot.Num}}/bids/{{.ID}}/cancel">

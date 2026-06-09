@@ -31,7 +31,7 @@ func (h *AuthHandler) LoginSubmit(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/auctions", http.StatusFound)
 		return
 	}
-	render(w, r, "login.html", map[string]interface{}{"Error": "Неверный логин или пароль"})
+	render(w, r, "login.html", map[string]interface{}{"Error": "Invalid username or password"})
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {

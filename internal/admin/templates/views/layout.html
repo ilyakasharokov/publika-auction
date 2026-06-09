@@ -1,10 +1,10 @@
 {{define "layout"}}
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{block "title" .}}Аукцион Admin{{end}}</title>
+  <title>{{block "title" .}}Auction Admin{{end}}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <style>
@@ -26,13 +26,13 @@
 </head>
 <body>
   <nav>
-    <a href="/admin/auctions">🔨 Аукционы</a>
-    <a href="/admin/clients">👥 Участники</a>
-    <a href="/admin/settings">🤖 Бот</a>
-    <a href="/metrics" target="_blank">📊 Метрики</a>
+    <a href="/admin/auctions">🔨 Auctions</a>
+    <a href="/admin/clients">👥 Clients</a>
+    <a href="/admin/settings">🤖 Bot</a>
+    <a href="/metrics" target="_blank">📊 Metrics</a>
     <span style="float:right">
       <form method="post" action="/admin/logout" style="display:inline">
-        <button class="outline contrast" style="padding:2px 10px;font-size:.85rem">Выход</button>
+        <button class="outline contrast" style="padding:2px 10px;font-size:.85rem">Logout</button>
       </form>
     </span>
   </nav>

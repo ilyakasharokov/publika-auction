@@ -1,13 +1,37 @@
-{{define "title"}}Новый лот{{end}}
+{{define "title"}}New Lot{{end}}
 {{define "content"}}
-<h2>Добавить лот в «{{.Auction.Title}}»</h2>
+<h2>Add lot to "{{.Auction.Title}}"</h2>
 {{if .Error}}<p style="color:red">{{.Error}}</p>{{end}}
-<form method="post" action="/admin/auctions/{{.Auction.Slug}}/lots">
-  <label>Название<input type="text" name="title" required placeholder="Картина Ивана Айвазовского"></label>
-  <label>Описание<textarea name="description" rows="3"></textarea></label>
-  <label>URL фотографии<input type="url" name="photo_url" placeholder="https://example.com/photo.jpg"></label>
-  <label>Стартовая цена (₽)<input type="number" name="start_price" value="30000" min="0" required></label>
-  <button type="submit">Добавить лот</button>
-  <a href="/admin/auctions/{{.Auction.Slug}}" role="button" class="secondary">Отмена</a>
+<form method="post" action="/admin/auctions/{{.Auction.Slug}}/lots" enctype="multipart/form-data">
+  <label>Title<input type="text" name="title" required placeholder="Ivan Aivazovsky painting"></label>
+  <label>Description<textarea name="description" rows="3"></textarea></label>
+  <label>
+    Photo
+    <input type="file" name="photo_file" accept="image/*" onchange="previewPhoto(this)">
+    <small>Upload a file or enter a URL below</small>
+  </label>
+  <img id="photo-preview" src="" style="display:none;max-width:300px;margin:.5rem 0;border-radius:6px">
+  <label>
+    Photo URL (if not uploading a file)
+    <input type="url" name="photo_url" id="photo-url" placeholder="https://example.com/photo.jpg">
+  </label>
+  <label>Starting price (₽)<input type="number" name="start_price" value="30000" min="0" required></label>
+  <button type="submit">Add lot</button>
+  <a href="/admin/auctions/{{.Auction.Slug}}" role="button" class="secondary">Cancel</a>
 </form>
+<script>
+function previewPhoto(input) {
+  var preview = document.getElementById('photo-preview');
+  var urlField = document.getElementById('photo-url');
+  if (input.files && input.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(input.files[0]);
+    urlField.value = '';
+  }
+}
+</script>
 {{end}}

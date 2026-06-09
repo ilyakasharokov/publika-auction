@@ -1,16 +1,16 @@
-{{define "title"}}Аукционы{{end}}
+{{define "title"}}Auctions{{end}}
 {{define "content"}}
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-  <h2>Аукционы</h2>
-  <a href="/admin/auctions/new" role="button">+ Создать аукцион</a>
+  <h2>Auctions</h2>
+  <a href="/admin/auctions/new" role="button">+ New auction</a>
 </div>
 
 {{if not .Auctions}}
-<p>Аукционов пока нет. <a href="/admin/auctions/new">Создать первый</a></p>
+<p>No auctions yet. <a href="/admin/auctions/new">Create the first one</a></p>
 {{else}}
 <table>
   <thead><tr>
-    <th>Название</th><th>Slug</th><th>Статус</th><th>Шаг ставки</th><th>Действия</th>
+    <th>Title</th><th>Slug</th><th>Status</th><th>Bid step</th><th>Actions</th>
   </tr></thead>
   <tbody>
   {{range .Auctions}}
@@ -18,19 +18,19 @@
     <td><a href="/admin/auctions/{{.Slug}}">{{.Title}}</a></td>
     <td>{{.Slug}}</td>
     <td>
-      {{if eq (str .Status) "active"}}<span class="badge-active">Активен</span>
-      {{else if eq (str .Status) "draft"}}<span class="badge-draft">Черновик</span>
-      {{else}}<span class="badge-ended">Завершён</span>{{end}}
+      {{if eq (str .Status) "active"}}<span class="badge-active">Active</span>
+      {{else if eq (str .Status) "draft"}}<span class="badge-draft">Draft</span>
+      {{else}}<span class="badge-ended">Ended</span>{{end}}
     </td>
     <td>{{.BidStep}} ₽</td>
     <td class="actions">
       {{if eq (str .Status) "draft"}}
       <form method="post" action="/admin/auctions/{{.Slug}}/activate">
-        <button>▶ Запустить</button>
+        <button>▶ Start</button>
       </form>
       {{else if eq (str .Status) "active"}}
       <form method="post" action="/admin/auctions/{{.Slug}}/end">
-        <button class="secondary">⏹ Завершить</button>
+        <button class="secondary">⏹ End</button>
       </form>
       {{end}}
     </td>

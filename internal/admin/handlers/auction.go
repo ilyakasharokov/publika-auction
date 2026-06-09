@@ -2,18 +2,22 @@ package handlers
 
 import (
 	"context"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
 	"publika-auction/internal/domain"
-	auctionsvc "publika-auction/internal/service/auction"
-	lotsvc "publika-auction/internal/service/lot"
-	"publika-auction/internal/repo/cache"
-	bidsvc "publika-auction/internal/service/bid"
 	"publika-auction/internal/hub"
+	"publika-auction/internal/repo/cache"
+	auctionsvc "publika-auction/internal/service/auction"
+	bidsvc "publika-auction/internal/service/bid"
+	lotsvc "publika-auction/internal/service/lot"
 )
 
 type AuctionHandler struct {
@@ -189,7 +193,7 @@ func (h *AuctionHandler) AddLot(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	r.ParseForm()
+	r.ParseMultipartForm(32 << 20)
 	num := 0
 	lots, _ := h.lotSvc.ListByAuction(context.Background(), a.ID)
 	for _, l := range lots {
@@ -204,12 +208,30 @@ func (h *AuctionHandler) AddLot(w http.ResponseWriter, r *http.Request) {
 			startPrice = startPrice*10 + int(c-'0')
 		}
 	}
+
+	photoURL := r.Form.Get("photo_url")
+	if file, header, err := r.FormFile("photo_file"); err == nil {
+		defer file.Close()
+		ext := filepath.Ext(header.Filename)
+		if ext == "" {
+			ext = ".jpg"
+		}
+		if err := os.MkdirAll("uploads", 0755); err == nil {
+			name := uuid.New().String() + ext
+			if dst, err := os.Create(filepath.Join("uploads", name)); err == nil {
+				defer dst.Close()
+				io.Copy(dst, file)
+				photoURL = "/uploads/" + name
+			}
+		}
+	}
+
 	req := lotsvc.CreateRequest{
 		AuctionID:   a.ID,
 		Num:         num,
 		Title:       r.Form.Get("title"),
 		Description: r.Form.Get("description"),
-		PhotoURL:    r.Form.Get("photo_url"),
+		PhotoURL:    photoURL,
 		StartPrice:  startPrice,
 	}
 	lot, err := h.lotSvc.Create(r.Context(), req)

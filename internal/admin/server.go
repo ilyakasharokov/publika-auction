@@ -51,6 +51,7 @@ func NewServer(
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 	r.Handle("/metrics", promhttp.Handler())
+	r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
 
 	r.Get("/admin/login", authH.LoginPage)
 	r.Post("/admin/login", authH.LoginSubmit)

@@ -1,28 +1,28 @@
 {{define "title"}}{{.Client.Phone}}{{end}}
 {{define "content"}}
-<p><a href="/admin/clients">← Участники</a></p>
+<p><a href="/admin/clients">← Clients</a></p>
 
 <div style="display:flex;justify-content:space-between;align-items:start">
   <div>
     <h2>{{.Client.TgFirstName}} {{.Client.TgLastName}}</h2>
-    <p>Телефон: <strong>{{.Client.Phone}}</strong></p>
+    <p>Phone: <strong>{{.Client.Phone}}</strong></p>
     {{if .Client.TgUsername}}<p>Telegram: @{{.Client.TgUsername}}</p>{{end}}
-    <p>Статус: {{if .Client.IsBlocked}}<span class="badge-ended">Заблокирован</span>
-    {{else}}<span class="badge-active">Активен</span>{{end}}</p>
+    <p>Status: {{if .Client.IsBlocked}}<span class="badge-ended">Blocked</span>
+    {{else}}<span class="badge-active">Active</span>{{end}}</p>
   </div>
   {{if not .Client.IsBlocked}}
   <form method="post" action="/admin/clients/{{.Client.Phone}}/block">
-    <button class="secondary outline">Заблокировать</button>
+    <button class="secondary outline">Block</button>
   </form>
   {{end}}
 </div>
 
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:1.5rem">
   <div>
-    <h3>Ставки ({{len .Bids}})</h3>
+    <h3>Bids ({{len .Bids}})</h3>
     {{if .Bids}}
     <table>
-      <thead><tr><th>Лот</th><th>Сумма</th><th>Время</th></tr></thead>
+      <thead><tr><th>Lot</th><th>Amount</th><th>Time</th></tr></thead>
       <tbody>
       {{range .Bids}}
       <tr>
@@ -33,11 +33,11 @@
       {{end}}
       </tbody>
     </table>
-    {{else}}<p style="color:#999">Ставок нет</p>{{end}}
+    {{else}}<p style="color:#999">No bids</p>{{end}}
   </div>
 
   <div>
-    <h3>Чат</h3>
+    <h3>Chat</h3>
     <div style="height:300px;overflow-y:auto;border:1px solid #ddd;padding:.5rem;border-radius:4px;margin-bottom:.5rem">
       {{range .Messages}}
       <div style="margin-bottom:.5rem">
@@ -46,18 +46,18 @@
         <br>{{.Text}}
       </div>
       {{else}}
-      <p style="color:#999">Сообщений нет</p>
+      <p style="color:#999">No messages</p>
       {{end}}
     </div>
-    {{if .Sent}}<p style="color:green">✓ Отправлено</p>{{end}}
+    {{if .Sent}}<p style="color:green">✓ Sent</p>{{end}}
     {{if .Client.TgUserID}}
     <form method="post" action="/admin/clients/{{.Client.Phone}}">
       <div style="display:flex;gap:.5rem">
-        <input type="text" name="message" placeholder="Сообщение..." required style="flex:1">
-        <button type="submit">Отправить</button>
+        <input type="text" name="message" placeholder="Message..." required style="flex:1">
+        <button type="submit">Send</button>
       </div>
     </form>
-    {{else}}<p style="color:#999;font-size:.85rem">Клиент не авторизован в боте</p>{{end}}
+    {{else}}<p style="color:#999;font-size:.85rem">Client has not connected to the bot yet</p>{{end}}
   </div>
 </div>
 {{end}}
