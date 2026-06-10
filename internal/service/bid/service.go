@@ -72,7 +72,9 @@ type Service struct {
 }
 
 func (s *Service) SetNotifier(n Notifier) {
-	s.notifier = n
+	// Wrap with a 2-second dedup window so rapid outbid notifications
+	// for the same user are collapsed into one (last price wins).
+	s.notifier = tgqueue.NewDedupNotifier(n, 2*time.Second)
 }
 
 func New(
