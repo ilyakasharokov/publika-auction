@@ -21,6 +21,21 @@ services:
       timeout: 5s
       retries: 5
 
+  telegram-bot-api:
+    image: ghcr.io/bots-house/docker-telegram-bot-api:latest
+    environment:
+      TELEGRAM_API_ID: ${TELEGRAM_API_ID}
+      TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
+      TELEGRAM_LOCAL: 1
+    volumes:
+      - telegram_api_data:/var/lib/telegram-bot-api
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   app:
     build:
       context: .
@@ -35,10 +50,13 @@ services:
       PUBLIKA_AUCTION_BOT_MONGO_URI: mongodb://mongo:27017
       PUBLIKA_AUCTION_BOT_MONGO_DB: auction
       PUBLIKA_AUCTION_BOT_REDIS_ADDR: redis:6379
+      PUBLIKA_AUCTION_BOT_TG_ENDPOINT: http://telegram-bot-api:8081/bot%s/%s
     depends_on:
       redis:
         condition: service_healthy
       mongo:
+        condition: service_healthy
+      telegram-bot-api:
         condition: service_healthy
     restart: unless-stopped
 
@@ -46,3 +64,4 @@ volumes:
   redis_data:
   mongo_data:
   uploads_data:
+  telegram_api_data:
